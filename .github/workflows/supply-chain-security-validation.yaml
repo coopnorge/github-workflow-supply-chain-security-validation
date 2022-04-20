@@ -1,0 +1,42 @@
+---
+name: Supply Chain Security Validation
+on:
+  workflow_call:
+    inputs: {}
+    secrets: {}
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    needs:
+      - dependency-review
+      - code-scanning
+    steps:
+      - run: "echo SUCCESS"
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v1
+
+  code-scanning:
+    name: Code Scanning
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
