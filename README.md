@@ -8,8 +8,8 @@ The workflow executes supply chain security tools and reports the results.
 
 ```yaml
 ---
+name: Pull Request CI
 on:
-  name: Pull Request CI
   push: {}
   pull_request: {}
   build:
