@@ -32,11 +32,28 @@ jobs:
       actions: read
       contents: read
     steps:
+      - uses: actions/github-script@v2
+        name: Get CodeQL supported languages
+        id: languages
+        with:
+          result-encoding: json
+          script: |
+            const result = await github.repos.listLanguages({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            const codeqlLanguages = ['cpp', 'xml', 'csharp', 'go', 'ruby', 'python', 'properties', 'csv', 'html', 'java', 'javascript'];
+            const languages = Object.keys(result['data']).filter(language => codeqlLanguages.includes(language.toLowerCase()));
+            return languages;
       - name: Check out repository
+        if: steps.languages.outputs.result != '[]'
         uses: actions/checkout@v3
       - name: Initialize CodeQL
+        if: steps.languages.outputs.result != '[]'
         uses: github/codeql-action/init@v2
       - name: Autobuild
+        if: steps.languages.outputs.result != '[]'
         uses: github/codeql-action/autobuild@v2
       - name: Perform CodeQL Analysis
+        if: steps.languages.outputs.result != '[]'
         uses: github/codeql-action/analyze@v2
