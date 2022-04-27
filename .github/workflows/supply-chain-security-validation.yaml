@@ -2,7 +2,11 @@
 name: Supply Chain Security Validation
 on:
   workflow_call:
-    inputs: {}
+    inputs:
+      codeql-code-scanning-category:
+        default: codeql-code-scanning
+        type: string
+        required: false
     secrets: {}
 jobs:
   validate:
@@ -57,3 +61,5 @@ jobs:
       - name: Perform CodeQL Analysis
         if: steps.languages.outputs.result != '[]'
         uses: github/codeql-action/analyze@v2
+        with:
+          category: ${{ inputs.codeql-code-scanning-category }}
