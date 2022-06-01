@@ -46,7 +46,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo
             });
-            const codeqlLanguages = ['cpp', 'xml', 'csharp', 'go', 'ruby', 'python', 'properties', 'csv', 'html', 'java', 'javascript'];
+            const codeqlLanguages = ['cpp', 'csharp', 'go', 'ruby', 'python', 'java', 'javascript', 'typescript'];
             const languages = Object.keys(result['data']).filter(language => codeqlLanguages.includes(language.toLowerCase()));
             return languages;
       - name: Check out repository
