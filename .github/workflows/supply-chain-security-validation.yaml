@@ -7,6 +7,10 @@ on:
         default: codeql-code-scanning
         type: string
         required: false
+      tfsec-code-scanning-category:
+        default: tfsec-code-scanning
+        type: string
+        required: false
     secrets: {}
 jobs:
   validate:
@@ -15,6 +19,7 @@ jobs:
     needs:
       - dependency-review
       - code-scanning
+      - tfsec
     steps:
       - run: "echo SUCCESS"
 
@@ -29,7 +34,7 @@ jobs:
         uses: actions/dependency-review-action@v1
 
   code-scanning:
-    name: Code Scanning
+    name: CodeQL Scanning
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -63,3 +68,28 @@ jobs:
         uses: github/codeql-action/analyze@v2
         with:
           category: ${{ inputs.codeql-code-scanning-category }}
+
+  tfsec:
+    name: tfsec Scanning
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Terrform files Count
+        id: terraform_files
+        run: echo "::set-output name=count::$(find . -name '*.tf' | wc -l | xargs)"
+      - name: tfsec
+        if: steps.terraform_files.outputs.count != '0'
+        uses: aquasecurity/tfsec-sarif-action@v0.1.0
+        with:
+          sarif_file: tfsec.sarif
+      - name: Upload SARIF file
+        if: steps.terraform_files.outputs.count != '0'
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          category: ${{ inputs.tfsec-code-scanning-category }}
+          sarif_file: tfsec.sarif
