@@ -84,7 +84,7 @@ jobs:
         run: echo "::set-output name=count::$(find . -name '*.tf' | wc -l | xargs)"
       - name: tfsec
         if: steps.terraform_files.outputs.count != '0'
-        uses: aquasecurity/tfsec-sarif-action@v0.1.1
+        uses: aquasecurity/tfsec-sarif-action@v0.1.3
         with:
           sarif_file: tfsec.sarif
       - name: Upload SARIF file
