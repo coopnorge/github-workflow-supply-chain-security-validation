@@ -1,5 +1,5 @@
 * @coopnorge/platform-guild @coopnorge/security-guild
 
-CODEOWNERS                        @coopnorge/security-guild
+/CODEOWNERS @coopnorge/security-guild
 
 .github/workflows/security-* @coopnorge/security-guild
