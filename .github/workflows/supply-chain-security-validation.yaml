@@ -7,6 +7,10 @@ on:
         default: codeql-code-scanning
         type: string
         required: false
+      code-scanning-timeout-minutes:
+        default: 10
+        type: int
+        required: false
       tfsec-code-scanning-category:
         default: tfsec-code-scanning
         type: string
@@ -26,6 +30,7 @@ jobs:
   dependency-review:
     name: Dependency Review
     runs-on: ubuntu-latest
+
     if: github.event_name == 'pull_request'
     steps:
       - name: Check out repository
@@ -36,6 +41,7 @@ jobs:
   code-scanning:
     name: CodeQL Scanning
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.codeql-code-timeout-minutes }}
     if: github.event_name != 'pull_request'
     permissions:
       security-events: write
