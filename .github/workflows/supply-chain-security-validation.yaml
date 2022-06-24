@@ -9,7 +9,7 @@ on:
         required: false
       code-scanning-timeout-minutes:
         default: 10
-        type: int
+        type: number
         required: false
       tfsec-code-scanning-category:
         default: tfsec-code-scanning
@@ -41,7 +41,7 @@ jobs:
   code-scanning:
     name: CodeQL Scanning
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ inputs.codeql-code-timeout-minutes }}
+    timeout-minutes: ${{ inputs.code-scanning-timeout-minutes }}
     if: github.event_name != 'pull_request'
     permissions:
       security-events: write
