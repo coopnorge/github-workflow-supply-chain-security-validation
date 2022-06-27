@@ -7,6 +7,10 @@ on:
         default: codeql-code-scanning
         type: string
         required: false
+      codeql-code-scanning-config-file:
+        default: null
+        type: string
+        required: false
       code-scanning-timeout-minutes:
         default: 10
         type: number
@@ -67,6 +71,8 @@ jobs:
       - name: Initialize CodeQL
         if: steps.languages.outputs.result != '[]'
         uses: github/codeql-action/init@v2
+        with:
+          config-file: ${{ inputs.codeql-code-scanning-config-file }}
       - name: Autobuild
         if: steps.languages.outputs.result != '[]'
         uses: github/codeql-action/autobuild@v2
