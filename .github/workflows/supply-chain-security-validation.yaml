@@ -52,32 +52,33 @@ jobs:
       actions: read
       contents: read
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - uses: fabasoad/setup-enry-action@main
+      - name: Detected Languages
+        id: detected-languages
+        run: echo "::set-output name=languages::$(enry | awk -F ' ' '{print $2}' | paste -sd ',' -)"
       - uses: actions/github-script@v2
         name: Get CodeQL supported languages
         id: languages
         with:
           result-encoding: json
           script: |
-            const result = await github.repos.listLanguages({
-              owner: context.repo.owner,
-              repo: context.repo.repo
-            });
+            const detectedLanguages = '${{ steps.detected-languages.outputs.languages }}'.toLowerCase().split(',');
             const codeqlLanguages = ['cpp', 'csharp', 'go', 'ruby', 'python', 'java', 'javascript', 'typescript'];
-            const languages = Object.keys(result['data']).filter(language => codeqlLanguages.includes(language.toLowerCase()));
-            return languages;
-      - name: Check out repository
-        if: steps.languages.outputs.result != '[]'
-        uses: actions/checkout@v3
+            const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
+            return languages.join(',');
       - name: Initialize CodeQL
-        if: steps.languages.outputs.result != '[]'
+        if: steps.languages.outputs.result != ''
         uses: github/codeql-action/init@v2
         with:
           config-file: ${{ inputs.codeql-code-scanning-config-file }}
+          languages: ${{ fromJSON(steps.languages.outputs.result) }}
       - name: Autobuild
-        if: steps.languages.outputs.result != '[]'
+        if: steps.languages.outputs.result != ''
         uses: github/codeql-action/autobuild@v2
       - name: Perform CodeQL Analysis
-        if: steps.languages.outputs.result != '[]'
+        if: steps.languages.outputs.result != ''
         uses: github/codeql-action/analyze@v2
         with:
           category: ${{ inputs.codeql-code-scanning-category }}
