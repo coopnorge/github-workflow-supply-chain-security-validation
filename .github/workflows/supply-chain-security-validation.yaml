@@ -69,16 +69,16 @@ jobs:
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
             return languages.join(',');
       - name: Initialize CodeQL
-        if: steps.languages.outputs.result != ''
+        if: steps.languages.outputs.result != '""'
         uses: github/codeql-action/init@v2
         with:
           config-file: ${{ inputs.codeql-code-scanning-config-file }}
           languages: ${{ fromJSON(steps.languages.outputs.result) }}
       - name: Autobuild
-        if: steps.languages.outputs.result != ''
+        if: steps.languages.outputs.result != '""'
         uses: github/codeql-action/autobuild@v2
       - name: Perform CodeQL Analysis
-        if: steps.languages.outputs.result != ''
+        if: steps.languages.outputs.result != '""'
         uses: github/codeql-action/analyze@v2
         with:
           category: ${{ inputs.codeql-code-scanning-category }}
