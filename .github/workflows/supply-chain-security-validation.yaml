@@ -21,6 +21,40 @@ on:
         required: false
     secrets: {}
 jobs:
+  should-run:
+    name: Should Run
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.should-run.outputs.result }}
+    steps:
+      - uses: actions/github-script@v6
+        name: Get SHA
+        id: sha
+        with:
+          result-encoding: string
+          script: |
+            if (context.eventName === 'pull_request') {
+              return context.payload.pull_request.head.sha;
+            }
+            return context.sha;
+      - id: pr
+        uses: 8BitJonny/gh-get-current-pr@2.1.0
+        with:
+          sha: ${{ steps.sha.outputs.result }}
+      - id: should-run
+        name: Should Run
+        uses: actions/github-script@v6
+        env:
+          IS_DRAFT_PR: ${{ fromJSON(steps.pr.outputs.pr).draft }}
+        with:
+          result-encoding: string
+          script: |
+            const { IS_DRAFT_PR } = process.env;
+            if (IS_DRAFT_PR === 'true') {
+              return false;
+            }
+            return true;
+
   validate:
     name: Validate
     runs-on: ubuntu-latest
@@ -34,8 +68,8 @@ jobs:
   dependency-review:
     name: Dependency Review
     runs-on: ubuntu-latest
-
-    if: github.event_name == 'pull_request'
+    needs: should-run
+    if: ${{ github.event_name == 'pull_request' && needs.should-run.outputs.should-run == 'true' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -45,8 +79,9 @@ jobs:
   code-scanning:
     name: CodeQL Scanning
     runs-on: ubuntu-latest
+    needs: should-run
     timeout-minutes: ${{ inputs.code-scanning-timeout-minutes }}
-    if: github.event_name != 'pull_request'
+    if: ${{ github.event_name != 'pull_request' && needs.should-run.outputs.should-run == 'true' }}
     permissions:
       security-events: write
       actions: read
@@ -86,7 +121,8 @@ jobs:
   tfsec:
     name: tfsec Scanning
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
+    needs: should-run
+    if: ${{ github.event_name != 'pull_request' && needs.should-run.outputs.should-run == 'true' }}
     permissions:
       security-events: write
       actions: read
