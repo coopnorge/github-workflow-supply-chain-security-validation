@@ -11,6 +11,10 @@ on:
         default: null
         type: string
         required: false
+      codeql-go-version:
+        default: 1.19
+        type: string
+        required: false
       code-scanning-timeout-minutes:
         default: 10
         type: number
@@ -68,6 +72,10 @@ jobs:
             const codeqlLanguages = ['cpp', 'csharp', 'go', 'ruby', 'python', 'java', 'javascript', 'typescript'];
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
             return languages.join(',');
+      - name: Set Go version
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ inputs.codeql-go-version }}
       - name: Initialize CodeQL
         if: steps.languages.outputs.result != '""'
         uses: github/codeql-action/init@v2
