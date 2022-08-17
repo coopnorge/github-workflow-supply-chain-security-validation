@@ -73,7 +73,7 @@ jobs:
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
             return languages.join(',');
       - name: Set Go version
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ inputs.codeql-go-version }}
       - name: Initialize CodeQL
