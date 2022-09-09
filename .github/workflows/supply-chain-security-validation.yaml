@@ -18,6 +18,18 @@ on:
         default: 1.19
         type: string
         required: false
+      codeql-java-version:
+        default: 17
+        type: string
+        required: false
+      codeql-java-cache:
+        default: null
+        type: string
+        required: false
+      codeql-java-distribution:
+        default: adopt
+        type: string
+        required: false
       code-scanning-timeout-minutes:
         default: 10
         type: number
@@ -79,6 +91,12 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ inputs.codeql-go-version }}
+      - name: Set Java version
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ inputs.codeql-java-distribution }}
+          java-version: ${{ inputs.codeql-java-version }}
+          cache: ${{ inputs.codeql-java-cache }}
       - name: Initialize CodeQL
         if: steps.languages.outputs.result != '""'
         uses: github/codeql-action/init@v2
