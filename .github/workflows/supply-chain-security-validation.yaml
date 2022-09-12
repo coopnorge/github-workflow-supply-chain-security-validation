@@ -83,7 +83,18 @@ jobs:
         with:
           result-encoding: json
           script: |
-            const detectedLanguages = '${{ steps.detected-languages.outputs.languages }}'.toLowerCase().split(',');
+            const enryCodeQLMapping = {
+              'c#': 'csharp',
+            };
+            function getCodeQLLanguage(enryLang) {
+              if (enryLang in enryCodeQLMapping) {
+                return enryCodeQLMapping[enryLang];
+              }
+              return enryLang;
+            }
+            const detectedLanguages = '${{ steps.detected-languages.outputs.languages }}'.toLowerCase().split(',').map(language => {
+              return getCodeQLLanguage(language)
+            });
             const codeqlLanguages = ['cpp', 'csharp', 'go', 'ruby', 'python', 'java', 'javascript', 'typescript'];
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
             return languages.join(',');
