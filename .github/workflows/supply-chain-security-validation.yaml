@@ -1,5 +1,5 @@
 ---
-name: Supply Chain Security Validation
+name: Supply Chain
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -62,7 +62,7 @@ jobs:
         uses: actions/dependency-review-action@v2
 
   code-scanning:
-    name: CodeQL Scanning
+    name: CodeQL Scan
     runs-on: ubuntu-latest
     timeout-minutes: ${{ inputs.code-scanning-timeout-minutes }}
     if: github.event_name != 'pull_request'
@@ -124,7 +124,7 @@ jobs:
           category: ${{ inputs.codeql-code-scanning-category }}
 
   tfsec:
-    name: tfsec Scanning
+    name: tfsec Scan
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
     permissions:
