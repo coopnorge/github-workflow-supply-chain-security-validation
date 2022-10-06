@@ -9,7 +9,7 @@ schedule on the default branch.
 
 ```yaml
 ---
-name: Security Scan
+name: Security
 on:
   push: {}
   pull_request: {}
@@ -17,7 +17,7 @@ on:
     - cron: '0 0 * * *'
 jobs:
   supply-chain-security-validation:
-    name: Supply Chain Security Validation
+    name: Supply Chain
     uses: coopnorge/github-workflow-supply-chain-security-validation/.github/workflows/supply-chain-security-validation.yaml@main
 ```
 
