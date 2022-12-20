@@ -76,7 +76,7 @@ jobs:
       - uses: fabasoad/setup-enry-action@main
       - name: Detected Languages
         id: detected-languages
-        run: echo "::set-output name=languages::$(enry | awk -F ' ' '{print $2}' | paste -sd ',' -)"
+        run: echo "name=languages::$(enry | awk -F ' ' '{print $2}' | paste -sd ',' -)" >> $GITHUB_OUTPUT
       - uses: actions/github-script@v6
         name: Get CodeQL supported languages
         id: languages
@@ -136,7 +136,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Terrform files Count
         id: terraform_files
-        run: echo "::set-output name=count::$(find . -name '*.tf' | wc -l | xargs)"
+        run: echo "name=count::$(find . -name '*.tf' | wc -l | xargs)" >> $GITHUB_OUTPUT
       - name: tfsec
         if: steps.terraform_files.outputs.count != '0'
         uses: aquasecurity/tfsec-sarif-action@v0.1.4
