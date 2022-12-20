@@ -59,7 +59,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
       - name: Dependency Review
-        uses: actions/dependency-review-action@v2
+        uses: actions/dependency-review-action@v3
 
   code-scanning:
     name: CodeQL Scan
