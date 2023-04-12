@@ -76,7 +76,7 @@ jobs:
       - uses: fabasoad/setup-enry-action@main
       - name: Detected Languages
         id: detected-languages
-        run: echo "name=languages::$(enry | awk -F ' ' '{print $2}' | paste -sd ',' -)" >> $GITHUB_OUTPUT
+        run: echo "languages=$(enry | awk -F ' ' '{print $2}' | paste -sd ',' -)" >> $GITHUB_OUTPUT
       - uses: actions/github-script@v6
         name: Get CodeQL supported languages
         id: languages
