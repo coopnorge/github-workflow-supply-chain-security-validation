@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: github-workflow-supply-chain-security-validation
+  title: Supply Chain Security Validation
+  annotations:
+    github.com/project-slug: github-workflow-supply-chain-security-validation
+spec:
+  type: library
+  lifecycle: production
+  owner: cloud-security
