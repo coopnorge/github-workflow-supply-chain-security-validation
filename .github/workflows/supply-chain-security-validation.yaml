@@ -115,7 +115,7 @@ jobs:
           config-file: ${{ inputs.codeql-code-scanning-config-file }}
           languages: ${{ fromJSON(steps.languages.outputs.result) }}
       - name: Add coopnorge Nuget source
-        if: steps.languages.outputs.result == 'csharp'
+        if: contains(steps.languages.outputs.result, 'csharp')
         run: |
           dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/coopnorge/index.json"
       - name: Autobuild
