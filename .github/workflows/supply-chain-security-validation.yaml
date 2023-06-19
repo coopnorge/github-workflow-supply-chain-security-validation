@@ -6,6 +6,10 @@ concurrency:
 on:
   workflow_call:
     inputs:
+      codeql-code-scanning-src-directory:
+        default: "."
+        type: string
+        required: false
       codeql-code-scanning-category:
         default: codeql-code-scanning
         type: string
@@ -74,6 +78,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
+      - name: set up private repo access
+        run: git config --global url."https://${{ secrets.REVIEWBOT_GITHUB_TOKEN }}:x-oauth-basic@github.com/coopnorge".insteadOf "https://github.com/coopnorge"
       - uses: fabasoad/setup-enry-action@main
       - name: Detected Languages
         id: detected-languages
@@ -122,6 +128,12 @@ jobs:
       - name: Autobuild
         if: steps.languages.outputs.result != '""'
         uses: github/codeql-action/autobuild@v2
+        continue-on-error: true
+      - name: Backup go build
+        if: contains(steps.languages.outputs.result, 'go') && steps.Autobuild.outcome == 'failure'
+        run: |
+          cd ${{ inputs.codeql-code-scanning-src-directory }}
+          go get .
       - name: Perform CodeQL Analysis
         if: steps.languages.outputs.result != '""'
         uses: github/codeql-action/analyze@v2
