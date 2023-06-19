@@ -19,6 +19,7 @@ jobs:
   supply-chain-security-validation:
     name: Supply Chain
     uses: coopnorge/github-workflow-supply-chain-security-validation/.github/workflows/supply-chain-security-validation.yaml@main
+    secrets: inherit
 ```
 
 ### Parameters

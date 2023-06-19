@@ -39,6 +39,8 @@ on:
         type: string
         required: false
     secrets: {}
+    #  REVIEWBOT_GITHUB_TOKEN:
+    #    required: true
 jobs:
   validate:
     name: Validate
@@ -115,8 +117,8 @@ jobs:
         with:
           config-file: ${{ inputs.codeql-code-scanning-config-file }}
           languages: ${{ fromJSON(steps.languages.outputs.result) }}
-      - name: Configure access to internal and private GitHub repos
-        run: git config --global url."https://${{ secrets.REVIEWBOT_GITHUB_TOKEN }}:x-oauth-basic@github.com/coopnorge".insteadOf "https://github.com/coopnorge"
+      # - name: Configure access to internal and private GitHub repos
+      #   run: git config --global url."https://${{ secrets.REVIEWBOT_GITHUB_TOKEN }}:x-oauth-basic@github.com/coopnorge".insteadOf "https://github.com/coopnorge"
       - name: Add coopnorge Nuget source
         if: contains(steps.languages.outputs.result, 'csharp')
         run: |
