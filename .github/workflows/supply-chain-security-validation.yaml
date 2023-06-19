@@ -15,7 +15,7 @@ on:
         type: string
         required: false
       codeql-go-version:
-        default: 1.20
+        default: "1.20"
         type: string
         required: false
       codeql-java-version:
