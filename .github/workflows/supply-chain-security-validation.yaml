@@ -6,6 +6,10 @@ concurrency:
 on:
   workflow_call:
     inputs:
+      run-code-scanning:
+        default: true
+        type: boolean
+        required: false
       codeql-code-scanning-category:
         default: codeql-code-scanning
         type: string
@@ -65,7 +69,7 @@ jobs:
     name: CodeQL Scan
     runs-on: ubuntu-latest
     timeout-minutes: ${{ inputs.code-scanning-timeout-minutes }}
-    if: github.event_name != 'pull_request'
+    if: ${{ inputs.run-code-scanning == true && github.event_name != 'pull_request' }}
     permissions:
       security-events: write
       actions: read
