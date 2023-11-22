@@ -77,6 +77,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4
+      - name: Configure access to internal and private GitHub repos
+        if: contains(steps.languages.outputs.result, 'go')
+        run: git config --global url."https://${{ secrets.REVIEWBOT_GITHUB_TOKEN }}:x-oauth-basic@github.com/coopnorge".insteadOf "https://github.com/coopnorge"
       - uses: fabasoad/setup-enry-action@84a938519217e730824fd7b4b1fb12b52471b22d # pin@main
       - name: Detected Languages
         id: detected-languages
@@ -99,12 +102,12 @@ jobs:
             const detectedLanguages = '${{ steps.detected-languages.outputs.languages }}'.toLowerCase().split(',').map(language => {
               return getCodeQLLanguage(language)
             });
-            
+
             // Always scan for actions
             // Enry does not find GitHub actions and they always exist if this workflow is running
             // So, always add it.
             detectedLanguages.push('actions');
-            
+
             const codeqlLanguages = ['c', 'cpp', 'csharp', 'go', 'python', 'java', 'javascript', 'typescript', 'actions'];
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
             return languages.join(',');
