@@ -108,7 +108,7 @@ jobs:
         with:
           go-version: ${{ inputs.codeql-go-version }}
       - name: Set Java version
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ inputs.codeql-java-distribution }}
           java-version: ${{ inputs.codeql-java-version }}
