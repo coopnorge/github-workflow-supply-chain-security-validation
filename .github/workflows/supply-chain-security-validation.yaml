@@ -115,7 +115,7 @@ jobs:
           cache: ${{ inputs.codeql-java-cache }}
       - name: Initialize CodeQL
         if: steps.languages.outputs.result != '""'
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           config-file: ${{ inputs.codeql-code-scanning-config-file }}
           languages: ${{ fromJSON(steps.languages.outputs.result) }}
@@ -125,10 +125,10 @@ jobs:
           dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/coopnorge/index.json"
       - name: Autobuild
         if: steps.languages.outputs.result != '""'
-        uses: github/codeql-action/autobuild@v2
+        uses: github/codeql-action/autobuild@v3
       - name: Perform CodeQL Analysis
         if: steps.languages.outputs.result != '""'
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
         with:
           category: ${{ inputs.codeql-code-scanning-category }}
 
@@ -153,7 +153,7 @@ jobs:
           sarif_file: tfsec.sarif
       - name: Upload SARIF file
         if: steps.terraform_files.outputs.count != '0'
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           category: ${{ inputs.tfsec-code-scanning-category }}
           sarif_file: tfsec.sarif
