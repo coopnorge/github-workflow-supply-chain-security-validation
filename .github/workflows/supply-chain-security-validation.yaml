@@ -107,6 +107,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ inputs.codeql-go-version }}
+          cache-dependency-path: "**/go.sum"
       - name: Set Java version
         uses: actions/setup-java@v4
         with:
