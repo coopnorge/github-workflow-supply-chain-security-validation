@@ -65,16 +65,13 @@ jobs:
       - name: Dependency Review
         uses: actions/dependency-review-action@v3
 
-  code-scanning:
-    name: CodeQL Scan
+  detect-languages:
+    name: Detect Languages
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ inputs.code-scanning-timeout-minutes }}
     if: ${{ inputs.run-code-scanning == true && github.event_name != 'pull_request' }}
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-      packages: read
+    outputs:
+      languages: ${{ toJson(fromJson(steps.languages.outputs.result).languages) }}
+      go: ${{ fromJson(steps.languages.outputs.result).go }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -100,34 +97,126 @@ jobs:
             const detectedLanguages = '${{ steps.detected-languages.outputs.languages }}'.toLowerCase().split(',').map(language => {
               return getCodeQLLanguage(language)
             });
-            const codeqlLanguages = ['cpp', 'csharp', 'go', 'ruby', 'python', 'java', 'javascript', 'typescript'];
+            const codeqlLanguages = ['cpp', 'csharp', 'ruby', 'python', 'java', 'javascript', 'typescript'];
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
-            return languages.join(',');
-      - name: Set Go version
-        uses: actions/setup-go@v5
+            return {
+              languages: languages,
+              go: detectedLanguages.includes('go'),
+            };
+
+  find-go-projects:
+    needs: detect-languages
+    name: Find Go Sub Projects
+    runs-on: ubuntu-latest
+    if: needs.detect-languages.outputs.go
+    outputs:
+      go-projects: ${{ steps.find-go-projects.outputs.go-projects }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Find go projects
+        id: find-go-projects
+        run: |
+          GO_PROJECTS=$(find . -maxdepth 4 -name go.mod -exec dirname {} \; | jq -R -s -c 'split("\n")[:-1]')
+          echo "found go projects: $GO_PROJECTS"
+          echo "go-projects=$GO_PROJECTS" >> "$GITHUB_OUTPUT"
+  
+  go-code-scanning:
+    needs:
+      - detect-languages
+      - find-go-projects
+    name: CodeQL Scan (Go)
+    runs-on: ubuntu-latest
+    if: needs.detect-languages.outputs.go
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJSON(needs.find-go-projects.outputs.go-projects) }}
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: changes
         with:
-          go-version: ${{ inputs.codeql-go-version }}
+          filters: |
+            project:
+              - ${{ matrix.project }}/**
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: ${{ matrix.project }}/go.mod
+          cache: false
+      - name: Determine Golang cache paths
+        id: go-env
+        run: |
+          echo "build-cache-path=$(go env GOCACHE)" >>"$GITHUB_OUTPUT"
+          echo "module-cache-path=$(go env GOMODCACHE)" >>"$GITHUB_OUTPUT"
+          echo "go-sum-file-path=${{ matrix.project }}/go.sum" >>"$GITHUB_OUTPUT"
+      - name: Setup Golang Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ steps.go-env.outputs.build-cache-path }}
+            ${{ steps.go-env.outputs.module-cache-path }}
+          key: ${{ runner.os }}-go-${{matrix.project}}-${{ hashFiles(steps.go-env.outputs.go-sum-file-path) }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{matrix.project}}-${{ hashFiles(steps.go-env.outputs.go-sum-file-path) }}
+            ${{ runner.os }}-go-${{matrix.project}}-
+            ${{ runner.os }}-go-
+      - uses: github/codeql-action/init@v3
+        if: steps.changes.outputs.project == 'true'
+        with:
+          languages: go
+          source-root: ${{ matrix.project }}
+          queries: security-extended,security-and-quality
+      - uses: github/codeql-action/autobuild@v3
+        if: steps.changes.outputs.project == 'true'
+        with:
+          working-directory: ${{ matrix.project }}
+      - uses: github/codeql-action/analyze@v3
+        if: steps.changes.outputs.project == 'true'
+
+  code-scanning:
+    needs:
+      - detect-languages
+    name: CodeQL Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.code-scanning-timeout-minutes }}
+    if: ${{ inputs.run-code-scanning == true && github.event_name != 'pull_request' && fromJSON(needs.detect-languages.outputs.languages).length > 0 }}
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ${{ fromJSON(needs.detect-languages.outputs.languages.languages) }}
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+      packages: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
       - name: Set Java version
+        if: ${{ matrix.language == 'java' }}
         uses: actions/setup-java@v4
         with:
           distribution: ${{ inputs.codeql-java-distribution }}
           java-version: ${{ inputs.codeql-java-version }}
           cache: ${{ inputs.codeql-java-cache }}
       - name: Initialize CodeQL
-        if: steps.languages.outputs.result != '""'
         uses: github/codeql-action/init@v3
         with:
           config-file: ${{ inputs.codeql-code-scanning-config-file }}
-          languages: ${{ fromJSON(steps.languages.outputs.result) }}
+          languages: ${{ matrix.language }}
       - name: Add coopnorge Nuget source
-        if: contains(steps.languages.outputs.result, 'csharp')
+        if: ${{ matrix.language == 'csharp' }}
         run: |
           dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/coopnorge/index.json"
       - name: Autobuild
-        if: steps.languages.outputs.result != '""'
         uses: github/codeql-action/autobuild@v3
       - name: Perform CodeQL Analysis
-        if: steps.languages.outputs.result != '""'
         uses: github/codeql-action/analyze@v3
         with:
           category: ${{ inputs.codeql-code-scanning-category }}
