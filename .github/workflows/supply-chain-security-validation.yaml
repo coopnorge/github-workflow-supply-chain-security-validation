@@ -103,7 +103,12 @@ jobs:
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
             return languages.join(',');
       - name: "Determine Go version"
-        run: echo "GO_VERSION=${{ inputs.codeql-go-version || 'stable' }}" >> $GITHUB_ENV
+        run: |
+          if [ -z "${{ inputs.codeql-go-version }}" ]; then
+            echo "GO_VERSION=stable" >> $GITHUB_ENV
+          else
+            echo "GO_VERSION=${{ inputs.codeql-go-version }}" >> $GITHUB_ENV
+          fi
       - name: Set Go version
         uses: actions/setup-go@v5
         with:
