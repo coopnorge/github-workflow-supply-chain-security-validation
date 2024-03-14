@@ -19,7 +19,7 @@ on:
         type: string
         required: false
       codeql-go-version:
-        default: "1.21"
+        default: "1.22"
         type: string
         required: false
       codeql-java-version:
@@ -103,10 +103,13 @@ jobs:
             const codeqlLanguages = ['cpp', 'csharp', 'go', 'ruby', 'python', 'java', 'javascript', 'typescript'];
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
             return languages.join(',');
+      - name: "Determine Go version"
+        run: echo "GO_VERSION=${{ inputs.codeql-go-version || 'stable' }}" >> $GITHUB_ENV
       - name: Set Go version
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ inputs.codeql-go-version }}
+          go-version: ${{ env.GO_VERSION }}
+          check-latest: true
           cache: true
           cache-dependency-path: "**/go.sum"
       - name: Set Java version
