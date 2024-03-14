@@ -106,14 +106,16 @@ jobs:
         run: |
           if [ -z "${{ inputs.codeql-go-version }}" ]; then
             echo "GO_VERSION=stable" >> $GITHUB_ENV
+            echo "GO_CHECK_LATEST=true" >> $GITHUB_ENV
           else
             echo "GO_VERSION=${{ inputs.codeql-go-version }}" >> $GITHUB_ENV
+            echo "GO_CHECK_LATEST=false" >> $GITHUB_ENV
           fi
       - name: Set Go version
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-          check-latest: true
+          check-latest: ${{ env.GO_CHECK_LATEST }}
           cache: true
           cache-dependency-path: "**/go.sum"
       - name: Set Java version
