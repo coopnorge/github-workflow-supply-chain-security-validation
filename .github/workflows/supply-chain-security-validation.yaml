@@ -19,7 +19,6 @@ on:
         type: string
         required: false
       codeql-go-version:
-        default: "1.22"
         type: string
         required: false
       codeql-java-version:
