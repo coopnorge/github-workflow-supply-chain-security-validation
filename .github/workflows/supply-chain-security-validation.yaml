@@ -162,7 +162,6 @@ jobs:
         uses: aquasecurity/trivy-action@0.20.0
         with:
           scan-type: fs
-          scanners: vuln,secrets,config
           format: sarif
           output: trivy-results.sarif
       - name: Upload SARIF file
