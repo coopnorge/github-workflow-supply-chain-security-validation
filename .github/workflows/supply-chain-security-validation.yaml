@@ -37,8 +37,8 @@ on:
         default: 10
         type: number
         required: false
-      tfsec-code-scanning-category:
-        default: tfsec-code-scanning
+      trivy-code-scanning-category:
+        default: trivy-code-scanning
         type: string
         required: false
     secrets: {}
@@ -49,7 +49,7 @@ jobs:
     needs:
       - dependency-review
       - code-scanning
-      - tfsec
+      - trivy
     steps:
       - run: "echo SUCCESS"
 
@@ -143,8 +143,8 @@ jobs:
         with:
           category: ${{ inputs.codeql-code-scanning-category }}
 
-  tfsec:
-    name: tfsec Scan
+  trivy:
+    name: trivy Scan
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
     permissions:
@@ -154,17 +154,19 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Terrform files Count
+      - name: Terraform files Count
         id: terraform_files
         run: echo "count=$(find . -name '*.tf' | wc -l | xargs)" >> $GITHUB_OUTPUT
-      - name: tfsec
+      - name: trivy
         if: steps.terraform_files.outputs.count != '0'
-        uses: aquasecurity/tfsec-sarif-action@v0.1.4
+        uses: aquasecurity/trivy-action@0.20.0
         with:
-          sarif_file: tfsec.sarif
+          scan-type: fs
+          format: sarif
+          output: trivy-results.sarif
       - name: Upload SARIF file
         if: steps.terraform_files.outputs.count != '0'
         uses: github/codeql-action/upload-sarif@v3
         with:
-          category: ${{ inputs.tfsec-code-scanning-category }}
-          sarif_file: tfsec.sarif
+          category: ${{ inputs.trivy-code-scanning-category }}
+          sarif_file: trivy-results.sarif
