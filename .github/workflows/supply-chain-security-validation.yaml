@@ -159,7 +159,7 @@ jobs:
         run: echo "count=$(find . -name '*.tf' | wc -l | xargs)" >> $GITHUB_OUTPUT
       - name: trivy
         if: steps.terraform_files.outputs.count != '0'
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           scan-type: fs
           format: sarif
