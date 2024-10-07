@@ -164,6 +164,9 @@ jobs:
           scan-type: fs
           format: sarif
           output: trivy-results.sarif
+        env:
+          # Workaround for trivy failing with "Database download error, TOOMANYREQUESTS"
+          ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload SARIF file
         if: steps.terraform_files.outputs.count != '0'
         uses: github/codeql-action/upload-sarif@v3
