@@ -154,11 +154,7 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Terraform files Count
-        id: terraform_files
-        run: echo "count=$(find . -name '*.tf' | wc -l | xargs)" >> $GITHUB_OUTPUT
       - name: trivy
-        if: steps.terraform_files.outputs.count != '0'
         uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: fs
@@ -170,7 +166,6 @@ jobs:
           # Workaround for trivy failing with "Database download error, TOOMANYREQUESTS"
           ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload SARIF file
-        if: steps.terraform_files.outputs.count != '0'
         uses: github/codeql-action/upload-sarif@v3
         with:
           category: ${{ inputs.trivy-code-scanning-category }}
