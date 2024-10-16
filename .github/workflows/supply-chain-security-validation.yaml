@@ -163,6 +163,8 @@ jobs:
         with:
           scan-type: fs
           format: sarif
+          scanners: vuln,secret,misconfig
+          vuln-type: os
           output: trivy-results.sarif
         env:
           # Workaround for trivy failing with "Database download error, TOOMANYREQUESTS"
