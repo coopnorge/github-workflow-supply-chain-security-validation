@@ -4,7 +4,7 @@ The workflow executes supply chain security tools and reports the results.
 
 ## Usage
 
-Run the workflow on pull requests, pushes to any branch and on a nightly
+Run the workflow on pull requests, pushes to any branch and on a weekly
 schedule on the default branch.
 
 ```yaml
@@ -14,7 +14,7 @@ on:
   push: {}
   pull_request: {}
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * 1'
 jobs:
   supply-chain-security-validation:
     name: Supply Chain
