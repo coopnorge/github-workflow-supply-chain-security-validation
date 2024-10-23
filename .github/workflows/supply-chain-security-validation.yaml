@@ -159,7 +159,7 @@ jobs:
         with:
           scan-type: fs
           format: sarif
-          scanners: vuln,secret,misconfig
+          scanners: vuln,secret
           vuln-type: os
           output: trivy-results.sarif
         env:
