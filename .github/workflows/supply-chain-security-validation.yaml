@@ -241,6 +241,8 @@ jobs:
         if: steps.cache-dbs.outcome == 'success'
 
       - name: Delete previous caches
+        # since the full db size is ~700 mb, it could easily exceed the repo limit of 10GB,
+        # so we delete older entries if newer entry is successful
         if: steps.cache-dbs.outcome == 'success'
         continue-on-error: true
         run: |
