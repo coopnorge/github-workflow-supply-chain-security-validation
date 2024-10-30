@@ -145,6 +145,7 @@ jobs:
 
   update-and-cache-trivy-db:
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
     outputs:
       trivy-db-sha: ${{ steps.trivy-db.outputs.sha }}
       trivy-java-db-sha: ${{ steps.trivy-java-db.outputs.sha }}
@@ -228,7 +229,7 @@ jobs:
 
       - id: cache-dbs
         name: Cache DBs
-        if: steps.restore-db-cache.outputs.cache-hit != 'true' && steps.download-db.outcome == 'success' && steps.download-java-db.outcome == 'success'
+        if: steps.download-db.outcome == 'success' && steps.download-java-db.outcome == 'success'
         uses: actions/cache/save@v4
         with:
           path: ${{ github.workspace }}/.cache/trivy
@@ -237,10 +238,10 @@ jobs:
       - name: Checkout
         # this step is needed for gh cache list in the next step
         uses: actions/checkout@v4
-        if: steps.restore-db-cache.outputs.cache-hit != 'true' && steps.cache-dbs.outcome == 'success'
+        if: steps.cache-dbs.outcome == 'success'
 
       - name: Delete previous caches
-        if: steps.restore-db-cache.outputs.cache-hit != 'true' && steps.cache-dbs.outcome == 'success'
+        if: steps.cache-dbs.outcome == 'success'
         continue-on-error: true
         run: |
           # get ids for all old custom-trivy-cache entries
