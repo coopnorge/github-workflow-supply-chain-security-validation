@@ -149,9 +149,6 @@ jobs:
       trivy-db-sha: ${{ steps.trivy-db.outputs.sha }}
       trivy-java-db-sha: ${{ steps.trivy-java-db.outputs.sha }}
     steps:
-      - name: Setup oras
-        uses: oras-project/setup-oras@v1
-
       - id: trivy-db
         name: Check trivy db sha
         env:
@@ -187,13 +184,26 @@ jobs:
         run: |
           echo "Cache hit: ${{ steps.cache.outputs.cache-hit }}"
 
+      - name: Setup oras
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: oras-project/setup-oras@v1
+
       - id: download-db
         name: Download and extract the vulnerability DB
         if: steps.cache.outputs.cache-hit != 'true'
         continue-on-error: true
         run: |
           mkdir -p $GITHUB_WORKSPACE/.cache/trivy/db
-          oras pull ghcr.io/aquasecurity/trivy-db:2
+          # Try to download from public.ecr.aws first
+          if oras pull public.ecr.aws/aquasecurity/trivy-db:2; then
+            echo "Downloaded trivy-db from public.ecr.aws"
+          # If that fails, try ghcr.io
+          elif oras pull ghcr.io/aquasecurity/trivy-db:2; then
+            echo "Downloaded trivy-db from ghcr.io"
+          else
+            echo "Failed to download trivy-db from both registries."
+            exit 1  # Exit with failure if both downloads fail
+          fi
           tar -xzf db.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/db
           rm db.tar.gz
 
@@ -203,7 +213,16 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p $GITHUB_WORKSPACE/.cache/trivy/java-db
-          oras pull ghcr.io/aquasecurity/trivy-java-db:1
+          # Try to download from public.ecr.aws first
+          if oras pull public.ecr.aws/aquasecurity/trivy-java-db:1; then
+            echo "Downloaded trivy-java-db from public.ecr.aws"
+          # If that fails, try ghcr.io
+          elif oras pull ghcr.io/aquasecurity/trivy-java-db:1; then
+            echo "Downloaded trivy-java-db from ghcr.io"
+          else
+            echo "Failed to download trivy-java-db from both registries."
+            exit 1  # Exit with failure if both downloads fail
+          fi
           tar -xzf javadb.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/java-db
           rm javadb.tar.gz
 
