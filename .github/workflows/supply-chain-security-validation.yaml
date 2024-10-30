@@ -173,12 +173,19 @@ jobs:
           echo "Trivy Java DB sha256:${sha}"
           echo "sha=${sha}" >> $GITHUB_OUTPUT
 
+      - id: previous-trivy-cache-ids
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ids=$(gh cache list | grep 'custom-cache-trivy-' | awk '{print $1}')
+          echo "cache_ids=${ids}" >> $GITHUB_OUTPUT
+
       - id: cache-db
         name: Restore Cache
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/.cache/trivy
-          key: cache-trivy-${{ steps.trivy-db.outputs.sha }}-${{ steps.trivy-java-db.outputs.sha }}
+          key: custom-cache-trivy-${{ steps.trivy-db.outputs.sha }}-${{ steps.trivy-java-db.outputs.sha }}
 
       - name: Cache Hit Check
         run: |
@@ -232,7 +239,18 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: ${{ github.workspace }}/.cache/trivy
-          key: cache-trivy-${{ steps.trivy-db.outputs.sha }}-${{ steps.trivy-java-db.outputs.sha }}
+          key: custom-cache-trivy-${{ steps.trivy-db.outputs.sha }}-${{ steps.trivy-java-db.outputs.sha }}
+
+      - name: Delete previous caches
+        if: steps.cache.outputs.cache-hit != 'true' && steps.cache-db.outcome == 'success'
+        continue-on-error: true
+        run: |
+          ids="${{ steps.previous-trivy-cache-ids.outputs.cache_ids }}"
+          IFS=',' read -ra ID_ARRAY <<< "$ids"
+          for id in "${ID_ARRAY[@]}"; do
+            echo "Deleting stale cache with id $id"
+            gh cache delete "$id"
+          done
 
   trivy:
     name: trivy Scan
@@ -251,8 +269,8 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/.cache/trivy
-          key: cache-trivy-${{ needs.update-and-cache-trivy-db.outputs.trivy-db-sha }}-${{ needs.update-and-cache-trivy-db.outputs.trivy-java-db-sha }}
-          restore-keys: cache-trivy-
+          key: custom-cache-trivy-${{ needs.update-and-cache-trivy-db.outputs.trivy-db-sha }}-${{ needs.update-and-cache-trivy-db.outputs.trivy-java-db-sha }}
+          restore-keys: custom-cache-trivy-
       - id: set-db-is-restored
         run: |
           # if any cache is restored, skip updating
