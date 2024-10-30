@@ -249,7 +249,7 @@ jobs:
         continue-on-error: true
         run: |
           # get ids for all old custom-trivy-cache entries
-          ids="gh cache list | grep 'custom-cache-trivy-' | grep -v 'custom-cache-trivy-${{ steps.trivy-db.outputs.sha }}-${{ steps.trivy-java-db.outputs.sha }}' | awk '{print $1}'"
+          ids=$(gh cache list | grep 'custom-cache-trivy-' | grep -v 'custom-cache-trivy-${{ steps.trivy-db.outputs.sha }}-${{ steps.trivy-java-db.outputs.sha }}' | awk '{print $1}')
           IFS=',' read -ra ID_ARRAY <<< "$ids"
           for id in "${ID_ARRAY[@]}"; do
             echo "Deleting stale cache with id $id"
