@@ -173,6 +173,8 @@ jobs:
           echo "Trivy Java DB sha256:${sha}"
           echo "sha=${sha}" >> $GITHUB_OUTPUT
 
+      - uses: actions/checkout@v4
+
       - id: previous-trivy-cache-ids
         env:
           GH_TOKEN: ${{ github.token }}
