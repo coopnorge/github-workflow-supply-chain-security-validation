@@ -180,7 +180,7 @@ jobs:
           ids=$(gh cache list | grep 'custom-cache-trivy-' | awk '{print $1}')
           echo "cache_ids=${ids}" >> $GITHUB_OUTPUT
 
-      - id: cache-db
+      - id: restore-db-cache
         name: Restore Cache
         uses: actions/cache/restore@v4
         with:
@@ -189,15 +189,15 @@ jobs:
 
       - name: Cache Hit Check
         run: |
-          echo "Latest db version already in cache: ${{ steps.cache.outputs.cache-hit }}. Skipping db download."
+          echo "Latest db version already in cache: ${{ steps.restore-db-cache.outputs.cache-hit }}. Skipping db download."
 
       - name: Setup oras
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.restore-db-cache.outputs.cache-hit != 'true'
         uses: oras-project/setup-oras@v1
 
       - id: download-db
         name: Download and extract the vulnerability DB
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.restore-db-cache.outputs.cache-hit != 'true'
         continue-on-error: true
         run: |
           mkdir -p $GITHUB_WORKSPACE/.cache/trivy/db
@@ -216,7 +216,7 @@ jobs:
 
       - id: download-java-db
         name: Download and extract the Java DB
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.restore-db-cache.outputs.cache-hit != 'true'
         continue-on-error: true
         run: |
           mkdir -p $GITHUB_WORKSPACE/.cache/trivy/java-db
@@ -233,16 +233,16 @@ jobs:
           tar -xzf javadb.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/java-db
           rm javadb.tar.gz
 
-      - id: cache-db
+      - id: cache-dbs
         name: Cache DBs
-        if: steps.cache.outputs.cache-hit != 'true' && steps.download-db.outcome == 'success' && steps.download-java-db.outcome == 'success'
+        if: steps.restore-db-cache.outputs.cache-hit != 'true' && steps.download-db.outcome == 'success' && steps.download-java-db.outcome == 'success'
         uses: actions/cache/save@v4
         with:
           path: ${{ github.workspace }}/.cache/trivy
           key: custom-cache-trivy-${{ steps.trivy-db.outputs.sha }}-${{ steps.trivy-java-db.outputs.sha }}
 
       - name: Delete previous caches
-        if: steps.cache.outputs.cache-hit != 'true' && steps.cache-db.outcome == 'success'
+        if: steps.restore-db-cache.outputs.cache-hit != 'true' && steps.cache-dbs.outcome == 'success'
         continue-on-error: true
         run: |
           ids="${{ steps.previous-trivy-cache-ids.outputs.cache_ids }}"
