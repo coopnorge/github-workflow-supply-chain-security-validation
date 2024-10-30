@@ -173,7 +173,7 @@ jobs:
           echo "Trivy Java DB sha256:${sha}"
           echo "sha=${sha}" >> $GITHUB_OUTPUT
 
-      - id: cache
+      - id: cache-db
         name: Restore Cache
         uses: actions/cache/restore@v4
         with:
@@ -182,7 +182,7 @@ jobs:
 
       - name: Cache Hit Check
         run: |
-          echo "Cache hit: ${{ steps.cache.outputs.cache-hit }}"
+          echo "Latest db version already in cache: ${{ steps.cache.outputs.cache-hit }}. Skipping db download."
 
       - name: Setup oras
         if: steps.cache.outputs.cache-hit != 'true'
