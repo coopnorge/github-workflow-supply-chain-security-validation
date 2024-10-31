@@ -152,6 +152,9 @@ jobs:
     outputs:
       trivy-db-sha: ${{ steps.trivy-db.outputs.sha }}
       trivy-java-db-sha: ${{ steps.trivy-java-db.outputs.sha }}
+    permissions:
+      contents: read # required for checkout, which is required for cache delete
+      actions: write # required to delete cache
     steps:
       - id: trivy-db
         name: Check trivy db sha
