@@ -160,8 +160,8 @@ jobs:
         run: |
           endpoint='/orgs/aquasecurity/packages/container/trivy-db/versions'
           headers='Accept: application/vnd.github+json'
-          jqFilter='.[] | select(.metadata.container.tags[] | contains("$TRIVY_DB_VERSION")) | .name | sub("sha256:";"")'
-          sha=$(gh api -H "${headers}" "${endpoint}" | jq --raw-output "${jqFilter}")
+          jqFilter='.[] | select(.metadata.container.tags[] | contains($TRIVY_DB_VERSION)) | .name | sub("sha256:";"")'
+          sha=$(gh api -H "${headers}" "${endpoint}" | jq --arg TRIVY_DB_VERSION "$TRIVY_DB_VERSION" --raw-output "${jqFilter}")
           echo "Trivy DB sha256:${sha}"
           echo "sha=${sha}" >> $GITHUB_OUTPUT
 
@@ -172,8 +172,8 @@ jobs:
         run: |
           endpoint='/orgs/aquasecurity/packages/container/trivy-java-db/versions'
           headers='Accept: application/vnd.github+json'
-          jqFilter='.[] | select(.metadata.container.tags[] | contains("$TRIVY_JAVA_DB_VERSION")) | .name | sub("sha256:";"")'
-          sha=$(gh api -H "${headers}" "${endpoint}" | jq --raw-output "${jqFilter}")
+          jqFilter='.[] | select(.metadata.container.tags[] | contains($TRIVY_JAVA_DB_VERSION)) | .name | sub("sha256:";"")'
+          sha=$(gh api -H "${headers}" "${endpoint}" | jq --arg TRIVY_JAVA_DB_VERSION "$TRIVY_JAVA_DB_VERSION" --raw-output "${jqFilter}")
           echo "Trivy Java DB sha256:${sha}"
           echo "sha=${sha}" >> $GITHUB_OUTPUT
 
