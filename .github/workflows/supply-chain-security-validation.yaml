@@ -254,13 +254,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         continue-on-error: true
         run: |
-          # get ids for all old custom-trivy-cache entries
-          ids=$(gh cache list | grep 'custom-cache-trivy-' | grep -v 'custom-cache-trivy-${{ steps.trivy-db.outputs.sha }}-${{ steps.trivy-java-db.outputs.sha }}' | awk '{print $1}')
-          IFS=',' read -ra ID_ARRAY <<< "$ids"
-          for id in "${ID_ARRAY[@]}"; do
+          # Get IDs for all old "custom-cache-trivy" entries, except for the one that was just cached, and delete them
+          ids=$(gh cache list | grep 'custom-cache-trivy-' | grep -v "custom-cache-trivy-${{ steps.trivy-db.outputs.sha }}-${{ steps.trivy-java-db.outputs.sha }}" | awk '{print $1}')
+          while IFS= read -r id; do
             echo "Deleting stale cache with id $id"
             gh cache delete "$id"
-          done
+          done <<< "$ids"
 
   trivy:
     name: trivy Scan
