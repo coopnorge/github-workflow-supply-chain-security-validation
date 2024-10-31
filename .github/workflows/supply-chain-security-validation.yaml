@@ -146,6 +146,9 @@ jobs:
   update-and-cache-trivy-db:
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
+    env:
+      TRIVY_DB_VERSION: 2
+      TRIVY_JAVA_DB_VERSION: 1
     outputs:
       trivy-db-sha: ${{ steps.trivy-db.outputs.sha }}
       trivy-java-db-sha: ${{ steps.trivy-java-db.outputs.sha }}
@@ -157,7 +160,7 @@ jobs:
         run: |
           endpoint='/orgs/aquasecurity/packages/container/trivy-db/versions'
           headers='Accept: application/vnd.github+json'
-          jqFilter='.[] | select(.metadata.container.tags[] | contains("latest")) | .name | sub("sha256:";"")'
+          jqFilter='.[] | select(.metadata.container.tags[] | contains("$TRIVY_DB_VERSION")) | .name | sub("sha256:";"")'
           sha=$(gh api -H "${headers}" "${endpoint}" | jq --raw-output "${jqFilter}")
           echo "Trivy DB sha256:${sha}"
           echo "sha=${sha}" >> $GITHUB_OUTPUT
@@ -169,7 +172,7 @@ jobs:
         run: |
           endpoint='/orgs/aquasecurity/packages/container/trivy-java-db/versions'
           headers='Accept: application/vnd.github+json'
-          jqFilter='.[] | select(.metadata.container.tags[] | contains("latest")) | .name | sub("sha256:";"")'
+          jqFilter='.[] | select(.metadata.container.tags[] | contains("$TRIVY_JAVA_DB_VERSION")) | .name | sub("sha256:";"")'
           sha=$(gh api -H "${headers}" "${endpoint}" | jq --raw-output "${jqFilter}")
           echo "Trivy Java DB sha256:${sha}"
           echo "sha=${sha}" >> $GITHUB_OUTPUT
@@ -196,10 +199,10 @@ jobs:
         run: |
           mkdir -p $GITHUB_WORKSPACE/.cache/trivy/db
           # Try to download from public.ecr.aws first
-          if oras pull public.ecr.aws/aquasecurity/trivy-db:2; then
+          if oras pull public.ecr.aws/aquasecurity/trivy-db:$TRIVY_DB_VERSION; then
             echo "Downloaded trivy-db from public.ecr.aws"
           # If that fails, try ghcr.io
-          elif oras pull ghcr.io/aquasecurity/trivy-db:2; then
+          elif oras pull ghcr.io/aquasecurity/trivy-db:$TRIVY_DB_VERSION; then
             echo "Downloaded trivy-db from ghcr.io"
           else
             echo "Failed to download trivy-db from both registries."
@@ -215,10 +218,10 @@ jobs:
         run: |
           mkdir -p $GITHUB_WORKSPACE/.cache/trivy/java-db
           # Try to download from public.ecr.aws first
-          if oras pull public.ecr.aws/aquasecurity/trivy-java-db:1; then
+          if oras pull public.ecr.aws/aquasecurity/trivy-java-db:$TRIVY_JAVA_DB_VERSION; then
             echo "Downloaded trivy-java-db from public.ecr.aws"
           # If that fails, try ghcr.io
-          elif oras pull ghcr.io/aquasecurity/trivy-java-db:1; then
+          elif oras pull ghcr.io/aquasecurity/trivy-java-db:$TRIVY_JAVA_DB_VERSION; then
             echo "Downloaded trivy-java-db from ghcr.io"
           else
             echo "Failed to download trivy-java-db from both registries."
