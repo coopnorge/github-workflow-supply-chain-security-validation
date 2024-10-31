@@ -245,7 +245,7 @@ jobs:
 
       - name: Delete previous caches
         # since the full db size is ~700 mb, it could easily exceed the repo limit of 10GB,
-        # so we delete older entries if newer entry is successful
+        # so we delete older entries if newer entry is successfully cached
         if: steps.cache-dbs.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
