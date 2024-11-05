@@ -143,8 +143,127 @@ jobs:
         with:
           category: ${{ inputs.codeql-code-scanning-category }}
 
+  update-and-cache-trivy-db:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    env:
+      TRIVY_DB_VERSION: 2
+      TRIVY_JAVA_DB_VERSION: 1
+    outputs:
+      trivy-db-sha: ${{ steps.trivy-db.outputs.sha }}
+      trivy-java-db-sha: ${{ steps.trivy-java-db.outputs.sha }}
+    permissions:
+      contents: read # required for checkout, which is required for cache delete
+      actions: write # required to delete cache
+    steps:
+      - id: trivy-db
+        name: Check trivy db sha
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          endpoint='/orgs/aquasecurity/packages/container/trivy-db/versions'
+          headers='Accept: application/vnd.github+json'
+          jqFilter='.[] | select(.metadata.container.tags[] | contains($TRIVY_DB_VERSION)) | .name | sub("sha256:";"")'
+          sha=$(gh api -H "${headers}" "${endpoint}" | jq --arg TRIVY_DB_VERSION "$TRIVY_DB_VERSION" --raw-output "${jqFilter}")
+          echo "Trivy DB sha256:${sha}"
+          echo "sha=${sha}" >> $GITHUB_OUTPUT
+
+      - id: trivy-java-db
+        name: Check trivy java db sha
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          endpoint='/orgs/aquasecurity/packages/container/trivy-java-db/versions'
+          headers='Accept: application/vnd.github+json'
+          jqFilter='.[] | select(.metadata.container.tags[] | contains($TRIVY_JAVA_DB_VERSION)) | .name | sub("sha256:";"")'
+          sha=$(gh api -H "${headers}" "${endpoint}" | jq --arg TRIVY_JAVA_DB_VERSION "$TRIVY_JAVA_DB_VERSION" --raw-output "${jqFilter}")
+          echo "Trivy Java DB sha256:${sha}"
+          echo "sha=${sha}" >> $GITHUB_OUTPUT
+
+      - id: restore-db-cache
+        name: Restore Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/.cache/trivy
+          key: custom-cache-trivy-${{ steps.trivy-db.outputs.sha }}-${{ steps.trivy-java-db.outputs.sha }}
+
+      - name: Cache Hit Check
+        run: |
+          echo "Latest db version already in cache: ${{ steps.restore-db-cache.outputs.cache-hit }}. Skipping db download."
+
+      - name: Setup oras
+        if: steps.restore-db-cache.outputs.cache-hit != 'true'
+        uses: oras-project/setup-oras@v1
+
+      - id: download-db
+        name: Download and extract the vulnerability DB
+        if: steps.restore-db-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/.cache/trivy/db
+          # Try to download from public.ecr.aws first
+          if oras pull public.ecr.aws/aquasecurity/trivy-db:$TRIVY_DB_VERSION; then
+            echo "Downloaded trivy-db from public.ecr.aws"
+          # If that fails, try ghcr.io
+          elif oras pull ghcr.io/aquasecurity/trivy-db:$TRIVY_DB_VERSION; then
+            echo "Downloaded trivy-db from ghcr.io"
+          else
+            echo "Failed to download trivy-db from both registries."
+            exit 1  # Exit with failure if both downloads fail
+          fi
+          tar -xzf db.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/db
+          rm db.tar.gz
+
+      - id: download-java-db
+        name: Download and extract the Java DB
+        if: steps.restore-db-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/.cache/trivy/java-db
+          # Try to download from public.ecr.aws first
+          if oras pull public.ecr.aws/aquasecurity/trivy-java-db:$TRIVY_JAVA_DB_VERSION; then
+            echo "Downloaded trivy-java-db from public.ecr.aws"
+          # If that fails, try ghcr.io
+          elif oras pull ghcr.io/aquasecurity/trivy-java-db:$TRIVY_JAVA_DB_VERSION; then
+            echo "Downloaded trivy-java-db from ghcr.io"
+          else
+            echo "Failed to download trivy-java-db from both registries."
+            exit 1  # Exit with failure if both downloads fail
+          fi
+          tar -xzf javadb.tar.gz -C $GITHUB_WORKSPACE/.cache/trivy/java-db
+          rm javadb.tar.gz
+
+      - id: cache-dbs
+        name: Cache DBs
+        if: steps.download-db.outcome == 'success' && steps.download-java-db.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/.cache/trivy
+          key: custom-cache-trivy-${{ steps.trivy-db.outputs.sha }}-${{ steps.trivy-java-db.outputs.sha }}
+
+      - name: Checkout
+        # this step is needed for gh cache list in the next step
+        uses: actions/checkout@v4
+        if: steps.cache-dbs.outcome == 'success'
+
+      - name: Delete previous caches
+        # since the full db size is ~700 mb, it could easily exceed the repo limit of 10GB,
+        # so we delete older entries if newer entry is successfully cached
+        if: steps.cache-dbs.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        continue-on-error: true
+        run: |
+          # Get IDs for all old "custom-cache-trivy" entries, except for the one that was just cached, and delete them
+          ids=$(gh cache list | grep 'custom-cache-trivy-' | grep -v "custom-cache-trivy-${{ steps.trivy-db.outputs.sha }}-${{ steps.trivy-java-db.outputs.sha }}" | awk '{print $1}')
+          while IFS= read -r id; do
+            echo "Deleting stale cache with id $id"
+            gh cache delete "$id"
+          done <<< "$ids"
+
   trivy:
     name: trivy Scan
+    needs: update-and-cache-trivy-db
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
     permissions:
@@ -154,6 +273,17 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+      - id: restore-db-cache
+        name: Restore DB from cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/.cache/trivy
+          key: custom-cache-trivy-${{ needs.update-and-cache-trivy-db.outputs.trivy-db-sha }}-${{ needs.update-and-cache-trivy-db.outputs.trivy-java-db-sha }}
+          restore-keys: custom-cache-trivy-
+      - id: set-db-is-restored
+        run: |
+          # if any cache is restored, skip updating
+          echo "db-is-restored=$([[ -n '${{ steps.restore-db-cache.outputs.cache-matched-key }}' ]] && echo true || echo false)" >> $GITHUB_OUTPUT
       - name: trivy
         uses: aquasecurity/trivy-action@0.28.0
         with:
@@ -162,9 +292,11 @@ jobs:
           scanners: vuln,secret
           vuln-type: os
           output: trivy-results.sarif
+          # disable the default cache behavior
+          cache: false
         env:
-          # Workaround for trivy failing with "Database download error, TOOMANYREQUESTS"
-          ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TRIVY_SKIP_DB_UPDATE: ${{ steps.set-db-is-restored.outputs.db-is-restored }}
+          TRIVY_SKIP_JAVA_DB_UPDATE: ${{ steps.set-db-is-restored.outputs.db-is-restored }}
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
         with:
