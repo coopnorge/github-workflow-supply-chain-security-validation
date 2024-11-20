@@ -285,7 +285,7 @@ jobs:
           # if any cache is restored, skip updating
           echo "db-is-restored=$([[ -n '${{ steps.restore-db-cache.outputs.cache-matched-key }}' ]] && echo true || echo false)" >> $GITHUB_OUTPUT
       - name: trivy
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.29.0
         with:
           scan-type: fs
           format: sarif
