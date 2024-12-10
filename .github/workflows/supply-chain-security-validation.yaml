@@ -257,6 +257,9 @@ jobs:
           # Get IDs for all old "custom-cache-trivy" entries, except for the one that was just cached, and delete them
           ids=$(gh cache list | grep 'custom-cache-trivy-' | grep -v "custom-cache-trivy-${{ steps.trivy-db.outputs.sha }}-${{ steps.trivy-java-db.outputs.sha }}" | awk '{print $1}')
           while IFS= read -r id; do
+            if [ -z "$id" ]; then
+              continue
+            fi
             echo "Deleting stale cache with id $id"
             gh cache delete "$id"
           done <<< "$ids"
