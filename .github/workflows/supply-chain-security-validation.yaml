@@ -6,6 +6,16 @@ concurrency:
 on:
   workflow_call:
     inputs:
+      checkout-submodules-mode:
+        description: 'Submodules mode (false, true, or recursive)'
+        default: "false"
+        type: string
+        required: false
+      checkout-submodules-fetch-depth:
+        description: 'Fetch depth (0 for full history)'
+        default: "1"
+        type: string
+        required: false
       run-code-scanning:
         default: true
         type: boolean
@@ -77,6 +87,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          submodules: ${{ inputs.checkout-submodules-mode }}
+          fetch-depth: ${{ inputs.checkout-submodules-fetch-depth }}
       - uses: fabasoad/setup-enry-action@main
       - name: Detected Languages
         id: detected-languages
