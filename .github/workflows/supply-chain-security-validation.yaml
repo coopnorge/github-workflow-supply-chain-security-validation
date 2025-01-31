@@ -99,7 +99,7 @@ jobs:
             const detectedLanguages = '${{ steps.detected-languages.outputs.languages }}'.toLowerCase().split(',').map(language => {
               return getCodeQLLanguage(language)
             });
-            const codeqlLanguages = ['cpp', 'csharp', 'go', 'python', 'java', 'javascript', 'typescript'];
+            const codeqlLanguages = ['c', 'cpp', 'csharp', 'go', 'python', 'java', 'javascript', 'typescript'];
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
             return languages.join(',');
       - name: "Determine Go version"
