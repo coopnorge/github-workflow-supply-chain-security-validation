@@ -99,7 +99,13 @@ jobs:
             const detectedLanguages = '${{ steps.detected-languages.outputs.languages }}'.toLowerCase().split(',').map(language => {
               return getCodeQLLanguage(language)
             });
-            const codeqlLanguages = ['c', 'cpp', 'csharp', 'go', 'python', 'java', 'javascript', 'typescript'];
+            
+            // Always scan for actions
+            // Enry does not find GitHub actions and they always exist if this workflow is running
+            // So, always add it.
+            detectedLanguages.push('actions');
+            
+            const codeqlLanguages = ['c', 'cpp', 'csharp', 'go', 'python', 'java', 'javascript', 'typescript', 'actions'];
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
             return languages.join(',');
       - name: "Determine Go version"
