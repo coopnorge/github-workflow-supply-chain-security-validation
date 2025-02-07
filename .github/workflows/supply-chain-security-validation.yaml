@@ -78,7 +78,9 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4
       - name: Configure access to internal and private GitHub repos
-        run: git config --global url."https://${{ secrets.REVIEWBOT_GITHUB_TOKEN }}:x-oauth-basic@github.com/coopnorge".insteadOf "https://github.com/coopnorge"
+        run: |
+          git config --global url."https://${{ secrets.REVIEWBOT_GITHUB_TOKEN }}:x-oauth-basic@github.com/coopnorge".insteadOf "https://github.com/coopnorge"
+          echo "GOPRIVATE=github.com/coopnorge" >> $GITHUB_ENV
       - uses: fabasoad/setup-enry-action@84a938519217e730824fd7b4b1fb12b52471b22d # pin@main
       - name: Detected Languages
         id: detected-languages
