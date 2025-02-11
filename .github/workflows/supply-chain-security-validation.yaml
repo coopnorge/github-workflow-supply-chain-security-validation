@@ -79,7 +79,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin@v4
       - name: Configure access to internal and private GitHub repos
         run: git config --global url."https://${{ secrets.REVIEWBOT_GITHUB_TOKEN }}:x-oauth-basic@github.com/coopnorge".insteadOf "https://github.com/coopnorge"
-      - uses: fabasoad/setup-enry-action@84a938519217e730824fd7b4b1fb12b52471b22d # pin@main
+      - uses: fabasoad/setup-enry-action@9ee9b17aa936a5c3a5d5f2182dcea4ed686d75b0 # pin@main
       - name: Detected Languages
         id: detected-languages
         run: echo "languages=$(enry | awk -F ' ' '{print $2}' | paste -sd ',' -)" >> $GITHUB_OUTPUT
