@@ -1,4 +1,3 @@
----
 name: Supply Chain
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -15,7 +14,7 @@ on:
         type: string
         required: false
       codeql-code-scanning-config-file:
-        default: null
+        default:
         type: string
         required: false
       codeql-go-version:
@@ -26,7 +25,7 @@ on:
         type: string
         required: false
       codeql-java-cache:
-        default: null
+        default:
         type: string
         required: false
       codeql-java-distribution:
@@ -45,7 +44,7 @@ on:
 jobs:
   validate:
     name: Validate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - dependency-review
       - code-scanning
@@ -55,7 +54,7 @@ jobs:
 
   dependency-review:
     name: Dependency Review
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     if: github.event_name == 'pull_request'
     steps:
@@ -66,7 +65,7 @@ jobs:
 
   code-scanning:
     name: CodeQL Scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: ${{ inputs.code-scanning-timeout-minutes }}
     if: ${{ inputs.run-code-scanning == true && github.event_name != 'pull_request' }}
     permissions:
@@ -153,7 +152,7 @@ jobs:
 
   trivy:
     name: trivy Scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name != 'pull_request'
     permissions:
       security-events: write
