@@ -79,6 +79,17 @@ jobs:
       - name: Configure access to internal and private GitHub repos
         run: git config --global url."https://${{ secrets.REVIEWBOT_GITHUB_TOKEN }}:x-oauth-basic@github.com/coopnorge".insteadOf "https://github.com/coopnorge"
       - uses: fabasoad/setup-enry-action@8c3105eb3007cc1e2439218a4345ed7e87954f70 # pin@main
+      - name: Clean up enry directory # needed because go is always detected https://github.com/fabasoad/setup-enry-action/issues/25
+        continue-on-error: true
+        run: |
+          ENRY_BIN_DIR=$(find . -maxdepth 1 -type d -name 'enry_*' | head -n 1)
+          ENRY_PATH=$(which enry)
+          TMP_ENRY_PATH=$(mktemp)
+          cp "$ENRY_PATH" "$TMP_ENRY_PATH"
+          rm -rf "${ENRY_BIN_DIR}"
+          mkdir -p "$(dirname "$ENRY_PATH")"
+          mv "$TMP_ENRY_PATH" "$ENRY_PATH"
+          chmod +x "$ENRY_PATH"
       - name: Detected Languages
         id: detected-languages
         run: echo "languages=$(enry | awk -F ' ' '{print $2}' | paste -sd ',' -)" >> $GITHUB_OUTPUT
