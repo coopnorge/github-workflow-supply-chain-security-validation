@@ -130,6 +130,7 @@ jobs:
             echo "GO_CHECK_LATEST=false" >> $GITHUB_ENV
           fi
       - name: Set Go version
+        if: contains(steps.languages.outputs.result, 'go')
         uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # pin@v5
         with:
           go-version: ${{ env.GO_VERSION }}
