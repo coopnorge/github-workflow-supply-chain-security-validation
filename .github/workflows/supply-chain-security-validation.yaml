@@ -162,7 +162,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
       - name: trivy
-        uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # pin@0.29.0
+        uses: aquasecurity/trivy-action@6c175e9c4083a92bbca2f9724c8a5e33bc2d97a5 # pin@0.30.0
         with:
           scan-type: fs
           format: sarif
