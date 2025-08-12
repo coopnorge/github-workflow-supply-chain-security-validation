@@ -59,7 +59,7 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
 
@@ -75,7 +75,7 @@ jobs:
       packages: read
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Configure access to internal and private GitHub repos
         run: git config --global url."https://${{ secrets.REVIEWBOT_GITHUB_TOKEN }}:x-oauth-basic@github.com/coopnorge".insteadOf "https://github.com/coopnorge"
       - uses: fabasoad/setup-enry-action@18f31b664f68fa6906f49e07567a31aa286cc24b # pin@main
@@ -160,7 +160,7 @@ jobs:
       contents: read
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: trivy
         uses: aquasecurity/trivy-action@dc5a429b52fcf669ce959baa2c2dd26090d2a6c4 # pin@0.32.0
         with:
