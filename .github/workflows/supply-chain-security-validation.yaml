@@ -112,6 +112,7 @@ jobs:
             const codeqlLanguages = ['c', 'cpp', 'csharp', 'go', 'python', 'java', 'javascript', 'typescript', 'actions'];
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
             return languages.join(',');
+      
       - name: "Determine Go version"
         run: |
           if [ -z "${{ inputs.codeql-go-version }}" ]; then
@@ -128,12 +129,21 @@ jobs:
           check-latest: ${{ env.GO_CHECK_LATEST }}
           cache: true
           cache-dependency-path: "**/go.sum"
+      
       - name: Set Java version
         uses: actions/setup-java@v5
         with:
           distribution: ${{ inputs.codeql-java-distribution }}
           java-version: ${{ inputs.codeql-java-version }}
           cache: ${{ inputs.codeql-java-cache }}
+      - name: Setup Maven settings
+        if: ${{ env.MAVEN_SETTINGS != '' }}
+        env: 
+          MAVEN_SETTINGS: ${{ secrets.MAVEN_SETTINGS_BASE64 }}
+        run: |
+          mkdir -p ~/.m2
+          echo $MAVEN_SETTINGS | base64 -d > ~/.m2/settings.xml
+            
       - name: Initialize CodeQL
         if: steps.languages.outputs.result != '""'
         uses: github/codeql-action/init@v3
