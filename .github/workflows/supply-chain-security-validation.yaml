@@ -44,13 +44,16 @@ on:
 jobs:
   validate:
     name: Validate
+    if: always()
     runs-on: ubuntu-24.04
     needs:
       - dependency-review
       - code-scanning
       - trivy
     steps:
-      - run: "echo SUCCESS"
+      - run: exit 1
+        name: "Catch errors"
+        if: ${{ contains(join(needs.*.result, ','), 'failure') || contains(join(needs.*.result, ','), 'cancelled') }}
 
   dependency-review:
     name: Dependency Review
