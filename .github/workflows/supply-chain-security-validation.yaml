@@ -85,7 +85,7 @@ jobs:
       - name: Detected Languages
         id: detected-languages
         run: echo "languages=$(enry | awk -F ' ' '{print $2}' | paste -sd ',' -)" >> $GITHUB_OUTPUT
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         name: Get CodeQL supported languages
         id: languages
         with:
