@@ -128,6 +128,8 @@ jobs:
             });
 
             // Always scan for actions
+            // Enry does not find GitHub actions and they always exist if this workflow is running
+            // So, always add it.
             detectedLanguages.push('actions');
 
             const codeqlLanguages = ['c', 'cpp', 'csharp', 'go', 'python', 'java', 'javascript', 'typescript', 'actions'];
