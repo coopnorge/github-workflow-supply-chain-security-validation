@@ -40,6 +40,11 @@ on:
         default: trivy-code-scanning
         type: string
         required: false
+      cgo-setup-script:
+        description: 'Path to CGO dependencies setup script (relative to repo root)'
+        required: false
+        type: string
+        default: ''
     secrets: {}
 jobs:
   validate:
@@ -79,12 +84,15 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+
       - name: Configure access to internal and private GitHub repos
         run: git config --global url."https://${{ secrets.REVIEWBOT_GITHUB_TOKEN }}:x-oauth-basic@github.com/coopnorge".insteadOf "https://github.com/coopnorge"
+
       - uses: fabasoad/setup-enry-action@e81ba89a68c7823cea7b3bf591999534f7236441 # pin@main
       - name: Detected Languages
         id: detected-languages
         run: echo "languages=$(enry | awk -F ' ' '{print $2}' | paste -sd ',' -)" >> $GITHUB_OUTPUT
+
       - uses: actions/github-script@v8
         name: Get CodeQL supported languages
         id: languages
@@ -122,6 +130,7 @@ jobs:
             echo "GO_VERSION=${{ inputs.codeql-go-version }}" >> $GITHUB_ENV
             echo "GO_CHECK_LATEST=false" >> $GITHUB_ENV
           fi
+
       - name: Set Go version
         uses: actions/setup-go@v6
         with:
@@ -130,6 +139,12 @@ jobs:
           cache: true
           cache-dependency-path: "**/go.sum"
       
+      - name: Set up CGO dependencies
+        if: inputs.cgo-setup-script != ''
+        run: |
+          chmod +x ${{ inputs.cgo-setup-script }}
+          ${{ inputs.cgo-setup-script }}
+
       - name: Set Java version
         uses: actions/setup-java@v5
         with:
