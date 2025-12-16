@@ -115,12 +115,14 @@ jobs:
             const enryCodeQLMapping = {
               'c#': 'csharp',
             };
+            
             function getCodeQLLanguage(enryLang) {
               if (enryLang in enryCodeQLMapping) {
                 return enryCodeQLMapping[enryLang];
               }
               return enryLang;
             }
+
             const detectedLanguages = '${{ steps.detected-languages.outputs.languages }}'.toLowerCase().split(',').map(language => {
               return getCodeQLLanguage(language)
             });
@@ -130,7 +132,8 @@ jobs:
 
             const codeqlLanguages = ['c', 'cpp', 'csharp', 'go', 'python', 'java', 'javascript', 'typescript', 'actions'];
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
-            return languages.join(',');
+
+            return languages;
       
       - name: "Determine Go version"
         run: |
