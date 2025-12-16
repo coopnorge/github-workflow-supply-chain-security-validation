@@ -108,7 +108,7 @@ jobs:
             const overrideLanguages = '${{ inputs.codeql-languages }}';
             if (overrideLanguages) {
               console.log('Using explicitly provided languages:', overrideLanguages);
-              return overrideLanguages.split(',').map(l => l.trim());
+              return overrideLanguages.split(',').map(l => l.trim()).join(',');
             }
             
             // Otherwise, use auto-detection
@@ -133,8 +133,8 @@ jobs:
             const codeqlLanguages = ['c', 'cpp', 'csharp', 'go', 'python', 'java', 'javascript', 'typescript', 'actions'];
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
 
-            return languages;
-      
+            return languages.join(',');
+
       - name: "Determine Go version"
         run: |
           if [ -z "${{ inputs.codeql-go-version }}" ]; then
