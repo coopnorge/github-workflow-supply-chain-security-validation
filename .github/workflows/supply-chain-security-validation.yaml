@@ -45,6 +45,11 @@ on:
         required: false
         type: string
         default: ''
+      codeql-languages:
+        description: 'Override auto-detected languages (comma-separated, e.g., "go,python"). If not set, auto-detection will be used.'
+        required: false
+        type: string
+        default: ''
     secrets: {}
 jobs:
   validate:
@@ -99,6 +104,14 @@ jobs:
         with:
           result-encoding: json
           script: |
+            // Check if languages are explicitly provided
+            const overrideLanguages = '${{ inputs.codeql-languages }}';
+            if (overrideLanguages) {
+              console.log('Using explicitly provided languages:', overrideLanguages);
+              return overrideLanguages.split(',').map(l => l.trim());
+            }
+            
+            // Otherwise, use auto-detection
             const enryCodeQLMapping = {
               'c#': 'csharp',
             };
@@ -113,8 +126,6 @@ jobs:
             });
 
             // Always scan for actions
-            // Enry does not find GitHub actions and they always exist if this workflow is running
-            // So, always add it.
             detectedLanguages.push('actions');
 
             const codeqlLanguages = ['c', 'cpp', 'csharp', 'go', 'python', 'java', 'javascript', 'typescript', 'actions'];
