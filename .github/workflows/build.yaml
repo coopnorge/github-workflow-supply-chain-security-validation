@@ -2,6 +2,7 @@ on:
   pull_request:
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    permissions: {}
+    runs-on: ubuntu-latest
     steps:
       - run: echo hello world
