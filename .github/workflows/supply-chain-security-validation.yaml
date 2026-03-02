@@ -131,6 +131,7 @@ jobs:
           cache-dependency-path: "**/go.sum"
       
       - name: Set Java version
+        if: contains(steps.languages.outputs.result, 'java')
         uses: actions/setup-java@v5
         with:
           distribution: ${{ inputs.codeql-java-distribution }}
