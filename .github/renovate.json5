@@ -6,7 +6,7 @@
     "automerge": true,
     "automergeStrategy": "squash",
     "rebaseWhen": "conflicted",
-    "packageRules": [
+    "customManagers": [
         // trivy version in workflow call
         {
             "customType": "regex",
