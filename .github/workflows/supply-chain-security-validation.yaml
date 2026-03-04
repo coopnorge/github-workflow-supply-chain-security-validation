@@ -182,7 +182,7 @@ jobs:
           scanners: vuln,secret
           vuln-type: os
           output: trivy-results.sarif
-          version: v0.69.2
+          version: v0.69.3
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v4
         with:
