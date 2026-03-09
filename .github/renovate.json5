@@ -18,5 +18,16 @@
             "depNameTemplate": "aquasecurity/trivy",
             "versioningTemplate": "semver"
         },
+        // enry version in setup enry step
+        {
+            "customType": "regex",
+            "managerFilePatterns": [
+                "/^.github/workflows/supply-chain-security-validation.yaml$/"
+            ],
+            "matchStrings": ["ENRY_VERSION:\\s*(?<currentValue>v[0-9.]+)"],
+            "datasourceTemplate": "github-releases",
+            "depNameTemplate": "go-enry/enry",
+            "versioningTemplate": "semver"
+        },
     ],
 }
