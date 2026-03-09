@@ -85,13 +85,13 @@ jobs:
         env:
           ENRY_VERSION: v1.2.0
         run: |
-          curl -L -o enry.tar.gz "https://github.com/go-enry/enry/releases/download/$ENRY_VERSION/enry-$ENRY_VERSION-linux-amd64.tar.gz"
-          tar -xzf enry.tar.gz
+          curl -L -o "$RUNNER_TEMP/enry.tar.gz" "https://github.com/go-enry/enry/releases/download/$ENRY_VERSION/enry-$ENRY_VERSION-linux-amd64.tar.gz"
+          tar -xzf "$RUNNER_TEMP/enry.tar.gz" -C "$RUNNER_TEMP"
           
           mkdir -p $HOME/.local/bin
-          mv enry $HOME/.local/bin/
+          mv "$RUNNER_TEMP/enry" "$HOME/.local/bin/"
 
-          chmod +x $HOME/.local/bin/enry
+          chmod +x "$HOME/.local/bin/enry"
 
           echo "$HOME/.local/bin" >> $GITHUB_PATH
       - name: Detected Languages
