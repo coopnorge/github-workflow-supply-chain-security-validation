@@ -160,7 +160,7 @@ jobs:
             
       - name: Initialize CodeQL
         if: steps.languages.outputs.result != '""'
-        uses: github/codeql-action/init@0d579ffd059c29b07949a3cce3983f0780820c98 # v4
+        uses: github/codeql-action/init@b1bff81932f5cdfc8695c7752dcee935dcd061c8 # v4
         with:
           config-file: ${{ inputs.codeql-code-scanning-config-file }}
           languages: ${{ fromJSON(steps.languages.outputs.result) }}
@@ -170,10 +170,10 @@ jobs:
           dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/coopnorge/index.json"
       - name: Autobuild
         if: steps.languages.outputs.result != '""'
-        uses: github/codeql-action/autobuild@0d579ffd059c29b07949a3cce3983f0780820c98 # v4
+        uses: github/codeql-action/autobuild@b1bff81932f5cdfc8695c7752dcee935dcd061c8 # v4
       - name: Perform CodeQL Analysis
         if: steps.languages.outputs.result != '""'
-        uses: github/codeql-action/analyze@0d579ffd059c29b07949a3cce3983f0780820c98 # v4
+        uses: github/codeql-action/analyze@b1bff81932f5cdfc8695c7752dcee935dcd061c8 # v4
         with:
           category: ${{ inputs.codeql-code-scanning-category }}
 
@@ -198,7 +198,7 @@ jobs:
           output: trivy-results.sarif
           version: v0.69.3
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@0d579ffd059c29b07949a3cce3983f0780820c98 # v4
+        uses: github/codeql-action/upload-sarif@b1bff81932f5cdfc8695c7752dcee935dcd061c8 # v4
         with:
           category: ${{ inputs.trivy-code-scanning-category }}
           sarif_file: trivy-results.sarif
