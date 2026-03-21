@@ -85,7 +85,7 @@ jobs:
         run: git config --global url."https://${{ secrets.REVIEWBOT_GITHUB_TOKEN }}:x-oauth-basic@github.com/coopnorge".insteadOf "https://github.com/coopnorge"
       - name: Setup enry
         env:
-          ENRY_VERSION: v1.2.0
+          ENRY_VERSION: v1.3.0
         run: |
           set -euo pipefail
 
