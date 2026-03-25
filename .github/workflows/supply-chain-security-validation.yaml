@@ -83,45 +83,43 @@ jobs:
         uses: actions/checkout@v6
       - name: Configure access to internal and private GitHub repos
         run: git config --global url."https://${{ secrets.REVIEWBOT_GITHUB_TOKEN }}:x-oauth-basic@github.com/coopnorge".insteadOf "https://github.com/coopnorge"
-      - name: Setup enry
-        env:
-          ENRY_VERSION: v1.2.0
-        run: |
-          set -euo pipefail
-
-          curl -L -o "$RUNNER_TEMP/enry.tar.gz" "https://github.com/go-enry/enry/releases/download/$ENRY_VERSION/enry-$ENRY_VERSION-linux-amd64.tar.gz"
-          tar -xzf "$RUNNER_TEMP/enry.tar.gz" -C "$RUNNER_TEMP"
-
-          mkdir -p $HOME/.local/bin
-          mv "$RUNNER_TEMP/enry" "$HOME/.local/bin/"
-
-          chmod +x "$HOME/.local/bin/enry"
-
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - uses: actions/checkout@v6
+        with:
+          repository: coopnorge/github-workflow-supply-chain-security-validation
+          sparse-checkout: |
+            docker-compose.yaml
+          path: .tmp-github-workflow-supply-chain-security-validation
       - name: Detected Languages
         id: detected-languages
-        run: echo "languages=$(enry | awk -F ' ' '{print $2}' | paste -sd ',' -)" >> $GITHUB_OUTPUT
+        run: |
+          set -euo pipefail
+          DOCKER_COMPOSE_PATH=$(mktemp ./docker-compose.XXXXXXXXXX.yaml)
+          mv ".tmp-github-workflow-supply-chain-security-validation/docker-compose.yaml" "$DOCKER_COMPOSE_PATH"
+          export USER_ID=$(id -u) && export GROUP_ID=$(id -g)
+          echo "languages=$(docker compose -f $DOCKER_COMPOSE_PATH run --rm linguist | awk '{print $3}' | paste -sd ',' -)" >> $GITHUB_OUTPUT
+          rm "$DOCKER_COMPOSE_PATH"
+          rm -rf ".tmp-github-workflow-supply-chain-security-validation"
       - uses: actions/github-script@v8
         name: Get CodeQL supported languages
         id: languages
         with:
           result-encoding: json
           script: |
-            const enryCodeQLMapping = {
+            const linguistCodeQLMapping = {
               'c#': 'csharp',
             };
-            function getCodeQLLanguage(enryLang) {
-              if (enryLang in enryCodeQLMapping) {
-                return enryCodeQLMapping[enryLang];
+            function getCodeQLLanguage(linguistLang) {
+              if (linguistLang in linguistCodeQLMapping) {
+                return linguistCodeQLMapping[linguistLang];
               }
-              return enryLang;
+              return linguistLang;
             }
             const detectedLanguages = '${{ steps.detected-languages.outputs.languages }}'.toLowerCase().split(',').map(language => {
               return getCodeQLLanguage(language)
             });
 
             // Always scan for actions
-            // Enry does not find GitHub actions and they always exist if this workflow is running
+            // linguist does not find GitHub actions and they always exist if this workflow is running
             // So, always add it.
             detectedLanguages.push('actions');
 
