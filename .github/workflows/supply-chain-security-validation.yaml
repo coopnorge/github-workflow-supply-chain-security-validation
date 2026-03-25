@@ -49,7 +49,9 @@ jobs:
     needs:
       - dependency-review
       - code-scanning
-      - trivy
+    # temparary disable trivy until this is fixed
+    # https://github.com/aquasecurity/trivy-action/issues/541
+    #  - trivy
     steps:
       - run: exit 1
         name: "Catch errors"
@@ -81,52 +83,50 @@ jobs:
         uses: actions/checkout@v6
       - name: Configure access to internal and private GitHub repos
         run: git config --global url."https://${{ secrets.REVIEWBOT_GITHUB_TOKEN }}:x-oauth-basic@github.com/coopnorge".insteadOf "https://github.com/coopnorge"
-      - name: Setup enry
-        env:
-          ENRY_VERSION: v1.2.0
-        run: |
-          set -euo pipefail
-
-          curl -L -o "$RUNNER_TEMP/enry.tar.gz" "https://github.com/go-enry/enry/releases/download/$ENRY_VERSION/enry-$ENRY_VERSION-linux-amd64.tar.gz"
-          tar -xzf "$RUNNER_TEMP/enry.tar.gz" -C "$RUNNER_TEMP"
-          
-          mkdir -p $HOME/.local/bin
-          mv "$RUNNER_TEMP/enry" "$HOME/.local/bin/"
-
-          chmod +x "$HOME/.local/bin/enry"
-
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - uses: actions/checkout@v6
+        with:
+          repository: coopnorge/github-workflow-supply-chain-security-validation
+          sparse-checkout: |
+            docker-compose.yaml
+          path: .tmp-github-workflow-supply-chain-security-validation
       - name: Detected Languages
         id: detected-languages
-        run: echo "languages=$(enry | awk -F ' ' '{print $2}' | paste -sd ',' -)" >> $GITHUB_OUTPUT
+        run: |
+          set -euo pipefail
+          DOCKER_COMPOSE_PATH=$(mktemp ./docker-compose.XXXXXXXXXX.yaml)
+          mv ".tmp-github-workflow-supply-chain-security-validation/docker-compose.yaml" "$DOCKER_COMPOSE_PATH"
+          export USER_ID=$(id -u) && export GROUP_ID=$(id -g)
+          echo "languages=$(docker compose -f $DOCKER_COMPOSE_PATH run --rm linguist | awk '{print $3}' | paste -sd ',' -)" >> $GITHUB_OUTPUT
+          rm "$DOCKER_COMPOSE_PATH"
+          rm -rf ".tmp-github-workflow-supply-chain-security-validation"
       - uses: actions/github-script@v8
         name: Get CodeQL supported languages
         id: languages
         with:
           result-encoding: json
           script: |
-            const enryCodeQLMapping = {
+            const linguistCodeQLMapping = {
               'c#': 'csharp',
             };
-            function getCodeQLLanguage(enryLang) {
-              if (enryLang in enryCodeQLMapping) {
-                return enryCodeQLMapping[enryLang];
+            function getCodeQLLanguage(linguistLang) {
+              if (linguistLang in linguistCodeQLMapping) {
+                return linguistCodeQLMapping[linguistLang];
               }
-              return enryLang;
+              return linguistLang;
             }
             const detectedLanguages = '${{ steps.detected-languages.outputs.languages }}'.toLowerCase().split(',').map(language => {
               return getCodeQLLanguage(language)
             });
 
             // Always scan for actions
-            // Enry does not find GitHub actions and they always exist if this workflow is running
+            // linguist does not find GitHub actions and they always exist if this workflow is running
             // So, always add it.
             detectedLanguages.push('actions');
 
             const codeqlLanguages = ['c', 'cpp', 'csharp', 'go', 'python', 'java', 'javascript', 'typescript', 'actions', 'kotlin', 'scala'];
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
             return languages.join(',');
-      
+
       - name: "Determine Go version"
         run: |
           if [ -z "${{ inputs.codeql-go-version }}" ]; then
@@ -143,7 +143,7 @@ jobs:
           check-latest: ${{ env.GO_CHECK_LATEST }}
           cache: true
           cache-dependency-path: "**/go.sum"
-      
+
       - name: Set Java version
         if: contains(steps.languages.outputs.result, 'java') || 
             contains(steps.languages.outputs.result, 'scala') || 
@@ -155,15 +155,15 @@ jobs:
           cache: ${{ inputs.codeql-java-cache }}
       - name: Setup Maven settings
         if: ${{ env.MAVEN_SETTINGS != '' }}
-        env: 
+        env:
           MAVEN_SETTINGS: ${{ secrets.MAVEN_SETTINGS_BASE64 }}
         run: |
           mkdir -p ~/.m2
           echo $MAVEN_SETTINGS | base64 -d > ~/.m2/settings.xml
-            
+
       - name: Initialize CodeQL
         if: steps.languages.outputs.result != '""'
-        uses: github/codeql-action/init@b1bff81932f5cdfc8695c7752dcee935dcd061c8 # v4
+        uses: github/codeql-action/init@38697555549f1db7851b81482ff19f1fa5c4fedc # v4
         with:
           config-file: ${{ inputs.codeql-code-scanning-config-file }}
           languages: ${{ fromJSON(steps.languages.outputs.result) }}
@@ -173,35 +173,37 @@ jobs:
           dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/coopnorge/index.json"
       - name: Autobuild
         if: steps.languages.outputs.result != '""'
-        uses: github/codeql-action/autobuild@b1bff81932f5cdfc8695c7752dcee935dcd061c8 # v4
+        uses: github/codeql-action/autobuild@38697555549f1db7851b81482ff19f1fa5c4fedc # v4
       - name: Perform CodeQL Analysis
         if: steps.languages.outputs.result != '""'
-        uses: github/codeql-action/analyze@b1bff81932f5cdfc8695c7752dcee935dcd061c8 # v4
+        uses: github/codeql-action/analyze@38697555549f1db7851b81482ff19f1fa5c4fedc # v4
         with:
           category: ${{ inputs.codeql-code-scanning-category }}
 
-  trivy:
-    name: trivy Scan
-    runs-on: ubuntu-24.04
-    if: github.event_name != 'pull_request'
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-      - name: trivy
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
-        with:
-          scan-type: fs
-          format: sarif
-          scanners: vuln,secret
-          vuln-type: os
-          output: trivy-results.sarif
-          version: v0.69.3
-      - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@b1bff81932f5cdfc8695c7752dcee935dcd061c8 # v4
-        with:
-          category: ${{ inputs.trivy-code-scanning-category }}
-          sarif_file: trivy-results.sarif
+  # temparary disable trivy until this is fixed
+  # https://github.com/aquasecurity/trivy-action/issues/541
+  # trivy:
+  #   name: trivy Scan
+  #   runs-on: ubuntu-24.04
+  #   if: github.event_name != 'pull_request'
+  #   permissions:
+  #     security-events: write
+  #     actions: read
+  #     contents: read
+  #   steps:
+  #     - name: Check out repository
+  #       uses: actions/checkout@v6
+  #     - name: trivy
+  #       uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+  #       with:
+  #         scan-type: fs
+  #         format: sarif
+  #         scanners: vuln,secret
+  #         vuln-type: os
+  #         output: trivy-results.sarif
+  #         version: v0.69.3
+  #     - name: Upload SARIF file
+  #       uses: github/codeql-action/upload-sarif@b1bff81932f5cdfc8695c7752dcee935dcd061c8 # v4
+  #       with:
+  #         category: ${{ inputs.trivy-code-scanning-category }}
+  #         sarif_file: trivy-results.sarif
