@@ -123,7 +123,7 @@ jobs:
             // So, always add it.
             detectedLanguages.push('actions');
 
-            const codeqlLanguages = ['c', 'cpp', 'csharp', 'go', 'python', 'java', 'javascript', 'typescript', 'actions'];
+            const codeqlLanguages = ['c', 'cpp', 'csharp', 'go', 'python', 'java', 'javascript', 'typescript', 'actions', 'kotlin', 'scala'];
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
             return languages.join(',');
 
@@ -145,7 +145,9 @@ jobs:
           cache-dependency-path: "**/go.sum"
 
       - name: Set Java version
-        if: contains(steps.languages.outputs.result, 'java')
+        if: contains(steps.languages.outputs.result, 'java') || 
+            contains(steps.languages.outputs.result, 'scala') || 
+            contains(steps.languages.outputs.result, 'kotlin')
         uses: actions/setup-java@v5
         with:
           distribution: ${{ inputs.codeql-java-distribution }}
