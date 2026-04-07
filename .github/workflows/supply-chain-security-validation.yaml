@@ -44,8 +44,8 @@ on:
 jobs:
   validate:
     name: Validate
-    if: always()
-    runs-on: ubuntu-24.04
+    if: ${{ contains(join(needs.*.result, ','), 'failure') || contains(join(needs.*.result, ','), 'cancelled') }}
+    runs-on: ubuntu-slim
     permissions: {}
     needs:
       - dependency-review
@@ -56,7 +56,6 @@ jobs:
     steps:
       - run: exit 1
         name: "Catch errors"
-        if: ${{ contains(join(needs.*.result, ','), 'failure') || contains(join(needs.*.result, ','), 'cancelled') }}
 
   dependency-review:
     name: Dependency Review
