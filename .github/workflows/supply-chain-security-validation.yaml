@@ -44,7 +44,7 @@ on:
 jobs:
   validate:
     name: Validate
-    if: ${{ contains(join(needs.*.result, ','), 'failure') || contains(join(needs.*.result, ','), 'cancelled') }}
+    if: failure()
     runs-on: ubuntu-slim
     permissions: {}
     needs:
