@@ -99,7 +99,7 @@ jobs:
           echo "languages=$(docker compose -f $DOCKER_COMPOSE_PATH run --rm linguist | awk '{print $3}' | paste -sd ',' -)" >> $GITHUB_OUTPUT
           rm "$DOCKER_COMPOSE_PATH"
           rm -rf ".tmp-github-workflow-supply-chain-security-validation"
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@v9
         name: Get CodeQL supported languages
         id: languages
         with:
