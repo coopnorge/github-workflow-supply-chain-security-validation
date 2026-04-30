@@ -1,0 +1,53 @@
+policy:
+  approval:
+  - or:
+    - Dependabot update
+    - Code change
+approval_rules:
+- name: Dependabot update
+  if:
+    only_has_contributors_in:
+      users:
+      - dependabot[bot]
+    only_changed_files:
+      paths:
+      - ^(.*/)?\.github/workflows/.*$
+      - ^(.*/)?Dockerfile$
+      - ^(.*/)?.*\.csproj$
+      - ^(.*/)?go\.mod$
+      - ^(.*/)?go\.sum$
+      - ^(.*/)?vendor/.*$
+      - ^(.*/)?pyproject\.toml$
+      - ^(.*/)?poetry\.lock$
+      - ^(.*/)?infrastructure/terraform/.*$
+      - ^(.*/)?terraform-shared/.*$
+    has_valid_signatures_by_keys:
+      key_ids:
+      - B5690EEEBB952194
+  requires:
+    count: 1
+    teams:
+    - coopnorge/cloud-security
+  options:
+    invalidate_on_push: true
+    methods:
+      github_review: true
+      comments: []
+    request_review:
+      enabled: true
+      mode: random-users
+      count: 2
+- name: Code change
+  if:
+    changed_files:
+      paths:
+      - .*
+  requires:
+    count: 1
+    teams:
+    - coopnorge/cloud-security
+  options:
+    invalidate_on_push: true
+    methods:
+      github_review: true
+      comments: []
