@@ -146,7 +146,7 @@ jobs:
 
       - name: Set Java version
         if: contains(steps.languages.outputs.result, 'java') || contains(steps.languages.outputs.result, 'scala') || contains(steps.languages.outputs.result, 'kotlin')
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: ${{ inputs.codeql-java-distribution }}
           java-version: ${{ inputs.codeql-java-version }}
