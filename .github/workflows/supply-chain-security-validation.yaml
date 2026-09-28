@@ -64,9 +64,9 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Dependency Review
-        uses: actions/dependency-review-action@v5.0.0
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
 
   code-scanning:
     name: CodeQL Scan
@@ -80,10 +80,10 @@ jobs:
       packages: read
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Configure access to internal and private GitHub repos
         run: git config --global url."https://${{ secrets.REVIEWBOT_GITHUB_TOKEN }}:x-oauth-basic@github.com/coopnorge".insteadOf "https://github.com/coopnorge"
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: coopnorge/github-workflow-supply-chain-security-validation
           sparse-checkout: |
@@ -99,7 +99,7 @@ jobs:
           echo "languages=$(docker compose -f $DOCKER_COMPOSE_PATH run --rm linguist | awk '{print $3}' | paste -sd ',' -)" >> $GITHUB_OUTPUT
           rm "$DOCKER_COMPOSE_PATH"
           rm -rf ".tmp-github-workflow-supply-chain-security-validation"
-      - uses: actions/github-script@v9
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         name: Get CodeQL supported languages
         id: languages
         with:
@@ -137,7 +137,7 @@ jobs:
             echo "GO_CHECK_LATEST=false" >> $GITHUB_ENV
           fi
       - name: Set Go version
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
         with:
           go-version: ${{ env.GO_VERSION }}
           check-latest: ${{ env.GO_CHECK_LATEST }}
@@ -146,7 +146,7 @@ jobs:
 
       - name: Set Java version
         if: contains(steps.languages.outputs.result, 'java') || contains(steps.languages.outputs.result, 'scala') || contains(steps.languages.outputs.result, 'kotlin')
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: ${{ inputs.codeql-java-distribution }}
           java-version: ${{ inputs.codeql-java-version }}
