@@ -1,6 +1,6 @@
 services:
   linguist:
-    image: ghcr.io/github-linguist/linguist:v9.5.0@sha256:24d32762687af71000f2a7ccbd3eb567519b022025578b339d33c97982d82ec6
+    image: europe-docker.pkg.dev/cloud-platform-production-9ea8/public-ghcr/github-linguist/linguist:v9.5.0@sha256:24d32762687af71000f2a7ccbd3eb567519b022025578b339d33c97982d82ec6
     working_dir: /src
     user: "${USER_ID}:${GROUP_ID}"
     environment:
