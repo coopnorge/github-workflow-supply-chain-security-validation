@@ -125,7 +125,7 @@ jobs:
 
             const codeqlLanguages = ['c', 'cpp', 'csharp', 'go', 'python', 'java', 'javascript', 'typescript', 'actions', 'kotlin', 'scala'];
             const languages = detectedLanguages.filter(language => codeqlLanguages.includes(language));
-            return languages.join(',');
+            return languages;
 
       - name: "Determine Go version"
         run: |
@@ -145,7 +145,7 @@ jobs:
           cache-dependency-path: "**/go.sum"
 
       - name: Set Java version
-        if: contains(steps.languages.outputs.result, 'java') || contains(steps.languages.outputs.result, 'scala') || contains(steps.languages.outputs.result, 'kotlin')
+        if: contains(fromJSON(steps.languages.outputs.result), 'java') || contains(fromJSON(steps.languages.outputs.result), 'scala') || contains(fromJSON(steps.languages.outputs.result), 'kotlin')
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: ${{ inputs.codeql-java-distribution }}
@@ -160,20 +160,20 @@ jobs:
           echo $MAVEN_SETTINGS | base64 -d > ~/.m2/settings.xml
 
       - name: Initialize CodeQL
-        if: steps.languages.outputs.result != '""'
+        if: steps.languages.outputs.result != '[]'
         uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           config-file: ${{ inputs.codeql-code-scanning-config-file }}
-          languages: ${{ fromJSON(steps.languages.outputs.result) }}
+          languages: ${{ join(fromJSON(steps.languages.outputs.result), ',') }}
       - name: Add coopnorge Nuget source
-        if: contains(steps.languages.outputs.result, 'csharp')
+        if: contains(fromJSON(steps.languages.outputs.result), 'csharp')
         run: |
           dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/coopnorge/index.json"
       - name: Autobuild
-        if: steps.languages.outputs.result != '""'
+        if: steps.languages.outputs.result != '[]'
         uses: github/codeql-action/autobuild@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
       - name: Perform CodeQL Analysis
-        if: steps.languages.outputs.result != '""'
+        if: steps.languages.outputs.result != '[]'
         uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           category: ${{ inputs.codeql-code-scanning-category }}
