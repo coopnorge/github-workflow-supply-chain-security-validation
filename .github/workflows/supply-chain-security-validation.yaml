@@ -29,7 +29,7 @@ on:
         type: string
         required: false
       codeql-java-distribution:
-        default: adopt
+        default: temurin
         type: string
         required: false
       code-scanning-timeout-minutes:
