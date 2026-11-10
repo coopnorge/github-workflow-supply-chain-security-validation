@@ -48,8 +48,8 @@ jobs:
     runs-on: ubuntu-slim
     permissions: {}
     needs:
+      - dependency-review-preliminary
       - dependency-review
-      - dependency-review-posture
       - code-scanning
     # temparary disable trivy until this is fixed
     # https://github.com/aquasecurity/trivy-action/issues/541
@@ -58,8 +58,8 @@ jobs:
       - run: exit 1
         name: "Catch errors"
 
-  dependency-review:
-    name: Dependency Review
+  dependency-review-preliminary:
+    name: Preliminary Dependency Review
     runs-on: ubuntu-slim
 
     if: github.event_name == 'pull_request'
@@ -70,15 +70,15 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Dependency Review
         id: dependency-review
-        # Failures are judged by the dependency-review-posture job
+        # Failures are judged by the dependency-review job
         continue-on-error: true
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
 
-  dependency-review-posture:
-    name: Dependency Review Security Posture
+  dependency-review:
+    name: Dependency Review
     runs-on: ubuntu-slim
-    needs: dependency-review
-    if: needs.dependency-review.outputs.outcome == 'failure'
+    needs: dependency-review-preliminary
+    if: needs.dependency-review-preliminary.outputs.outcome == 'failure'
     permissions:
       contents: read
     steps:
