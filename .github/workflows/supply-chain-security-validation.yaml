@@ -49,6 +49,7 @@ jobs:
     permissions: {}
     needs:
       - dependency-review
+      - dependency-review-posture
       - code-scanning
     # temparary disable trivy until this is fixed
     # https://github.com/aquasecurity/trivy-action/issues/541
@@ -62,11 +63,56 @@ jobs:
     runs-on: ubuntu-slim
 
     if: github.event_name == 'pull_request'
+    outputs:
+      outcome: ${{ steps.dependency-review.outcome }}
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Dependency Review
+        id: dependency-review
+        # Failures are judged by the dependency-review-posture job
+        continue-on-error: true
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+
+  dependency-review-posture:
+    name: Dependency Review Security Posture
+    runs-on: ubuntu-slim
+    needs: dependency-review
+    if: needs.dependency-review.outputs.outcome == 'failure'
+    permissions:
+      contents: read
+    steps:
+      - name: Check for newly introduced vulnerabilities
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { base, head } = context.payload.pull_request;
+            const changes = await github.paginate(
+              'GET /repos/{owner}/{repo}/dependency-graph/compare/{basehead}',
+              { owner, repo, basehead: `${base.sha}...${head.sha}` },
+            );
+
+            // Net count per package advisory: added occurrences minus removed occurrences
+            const counts = new Map();
+            for (const change of changes) {
+              const delta = change.change_type === 'added' ? 1 : -1;
+              for (const vulnerability of change.vulnerabilities ?? []) {
+                const key = `${change.ecosystem}/${change.name} ${vulnerability.advisory_ghsa_id} (${vulnerability.severity})`;
+                counts.set(key, (counts.get(key) ?? 0) + delta);
+              }
+            }
+
+            const addsVulnerable = changes.some(c => c.change_type === 'added' && c.vulnerabilities?.length);
+            const introduced = [...counts].filter(([, count]) => count > 0).map(([key]) => key);
+
+            if (!addsVulnerable) {
+              core.setFailed('Dependency review failed for a reason other than vulnerable dependencies.');
+            } else if (introduced.length > 0) {
+              core.setFailed(`New vulnerabilities are introduced:\n${introduced.join('\n')}`);
+            } else {
+              core.info('Vulnerable dependencies changed, but no new vulnerabilities are introduced.');
+            }
 
   code-scanning:
     name: CodeQL Scan
