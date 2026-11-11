@@ -40,6 +40,10 @@ on:
         default: trivy-code-scanning
         type: string
         required: false
+      runner-cores:
+        default: 2
+        type: number
+        required: false
     secrets: {}
 jobs:
   validate:
@@ -116,7 +120,9 @@ jobs:
 
   code-scanning:
     name: CodeQL Scan
-    runs-on: ubuntu-24.04
+    runs-on:
+      group: ubuntu-latest-large-pool
+      labels: ubuntu-latest-${{ inputs.runner-cores }}core
     timeout-minutes: ${{ inputs.code-scanning-timeout-minutes }}
     if: ${{ inputs.run-code-scanning == true && github.event_name != 'pull_request' }}
     permissions:
