@@ -116,7 +116,7 @@ jobs:
 
   code-scanning:
     name: CodeQL Scan
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: ${{ inputs.code-scanning-timeout-minutes }}
     if: ${{ inputs.run-code-scanning == true && github.event_name != 'pull_request' }}
     permissions:
