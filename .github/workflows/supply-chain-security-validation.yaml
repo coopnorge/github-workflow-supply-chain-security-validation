@@ -207,7 +207,7 @@ jobs:
 
       - name: Initialize CodeQL
         if: steps.languages.outputs.result != '[]'
-        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           config-file: ${{ inputs.codeql-code-scanning-config-file }}
           languages: ${{ join(fromJSON(steps.languages.outputs.result), ',') }}
@@ -217,10 +217,10 @@ jobs:
           dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/coopnorge/index.json"
       - name: Autobuild
         if: steps.languages.outputs.result != '[]'
-        uses: github/codeql-action/autobuild@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        uses: github/codeql-action/autobuild@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
       - name: Perform CodeQL Analysis
         if: steps.languages.outputs.result != '[]'
-        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           category: ${{ inputs.codeql-code-scanning-category }}
 
